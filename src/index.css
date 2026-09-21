@@ -1,0 +1,198 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --bg-canvas: #FFFFFF;
+    --dot-color: #E2E8F0;
+    --grid-color: rgba(0, 0, 0, 0.05);
+  }
+
+  .dark {
+    --bg-canvas: #1E1E1E;
+    --dot-color: #2F2F2F;
+    --grid-color: rgba(255, 255, 255, 0.04);
+  }
+
+  body {
+    margin: 0;
+    padding: 0;
+    overflow: hidden;
+    user-select: none;
+    -webkit-user-select: none;
+    font-family: 'Inter', system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  }
+}
+
+/* Custom Scrollbars */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #CBD5E1;
+  border-radius: 9999px;
+}
+
+.dark ::-webkit-scrollbar-thumb {
+  background: #333333;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94A3B8;
+}
+
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #4A4A4A;
+}
+
+/* Canvas Backgrounds - Light & Dark */
+.canvas-dots {
+  background-color: #FFFFFF;
+  background-image: radial-gradient(#E2E8F0 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+
+.dark .canvas-dots {
+  background-color: #1E1E1E;
+  background-image: radial-gradient(#2F2F2F 1.5px, transparent 1.5px);
+  background-size: 24px 24px;
+}
+
+.canvas-grid {
+  background-color: #FFFFFF;
+  background-image: 
+    linear-gradient(to right, rgba(0, 0, 0, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(0, 0, 0, 0.04) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+.dark .canvas-grid {
+  background-color: #1E1E1E;
+  background-image: 
+    linear-gradient(to right, rgba(255, 255, 255, 0.035) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.035) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Eraser Hand Font */
+.font-hand {
+  font-family: 'Caveat', cursive;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+/* Eraser Box Shadow */
+.eraser-card-shadow {
+  box-shadow: 0 1px 3px 0 rgba(0, 0, 0, 0.06), 0 1px 2px 0 rgba(0, 0, 0, 0.03);
+}
+
+.dark .eraser-card-shadow {
+  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+}
+
+/* Floating Toolbar Shadow */
+.eraser-floating-shadow {
+  box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08), 0 8px 10px -6px rgba(0, 0, 0, 0.04);
+}
+
+.dark .eraser-floating-shadow {
+  box-shadow: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.3);
+}
+
+/* Markdown styling inside editor */
+.prose-light {
+  color: #374151;
+}
+.prose-light h1 {
+  color: #111827;
+  font-weight: 700;
+  font-size: 1.6rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.prose-light h2 {
+  color: #1F2937;
+  font-weight: 600;
+  font-size: 1.3rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.prose-light h3 {
+  color: #374151;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-top: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+.prose-light p {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+.prose-light code {
+  background: #F3F4F6;
+  color: #4F46E5;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.875em;
+}
+
+.prose-dark {
+  color: #D8DEE9;
+}
+.prose-dark h1 {
+  color: #ECEFF4;
+  font-weight: 700;
+  font-size: 1.6rem;
+  margin-top: 1.25rem;
+  margin-bottom: 0.75rem;
+}
+.prose-dark h2 {
+  color: #E5E9F0;
+  font-weight: 600;
+  font-size: 1.3rem;
+  margin-top: 1rem;
+  margin-bottom: 0.5rem;
+}
+.prose-dark h3 {
+  color: #E5E9F0;
+  font-weight: 600;
+  font-size: 1.1rem;
+  margin-top: 0.85rem;
+  margin-bottom: 0.4rem;
+}
+.prose-dark p {
+  margin-bottom: 0.75rem;
+  line-height: 1.6;
+}
+.prose-dark code {
+  background: #1E2230;
+  color: #81A1C1;
+  padding: 0.15rem 0.35rem;
+  border-radius: 0.25rem;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 0.875em;
+}
+
+@keyframes subtlePulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.88;
+  }
+  50% {
+    transform: scale(1.12);
+    opacity: 1;
+  }
+}
+
+.animate-subtle-pulse {
+  animation: subtlePulse 2.4s ease-in-out infinite;
+}
+
