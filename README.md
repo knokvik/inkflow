@@ -101,27 +101,3 @@ Click **Apply to Canvas** to reconstruct the visual layout!
 | `Ctrl / Cmd + Y` | Redo |
 | `Delete` / `Backspace` | Delete Selected |
 | `?` | Keyboard Shortcuts Modal |
-
-<!-- commit 38 -->
-<!-- commit 39 -->
-<!-- commit 40 -->
-<!-- commit 42 -->
-<!-- commit 43 -->
-<!-- commit 44 -->
-<!-- commit 45 -->
-<!-- commit 46 -->
-<!-- commit 47 -->
-<!-- commit 48 -->
-<!-- commit 49 -->
-<!-- commit 50 -->
-<!-- commit 51 -->
-<!-- commit 52 -->
-<!-- commit 53 -->
-<!-- commit 54 -->
-<!-- commit 55 -->
-<!-- commit 56 -->
-<!-- commit 57 -->
-<!-- commit 58 -->
-<!-- commit 59 -->
-<!-- commit 60 -->
-<!-- commit 61 -->
