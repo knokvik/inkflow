@@ -103,3 +103,4 @@ Click **Apply to Canvas** to reconstruct the visual layout!
 | `?` | Keyboard Shortcuts Modal |
 
 <!-- commit 258 -->
+<!-- commit 260 -->
