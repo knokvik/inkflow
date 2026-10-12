@@ -1,8 +1,8 @@
 import { EraserDocument } from '../types/canvas';
 import { STARTER_AGENTIC_SCRAPER_DOCUMENT } from '../constants/starterScraperDoc';
 
-const STORAGE_KEY = 'eraser_documents_v3';
-const ACTIVE_DOC_KEY = 'eraser_active_doc_id_v3';
+const STORAGE_KEY = 'eraser_documents_v4';
+const ACTIVE_DOC_KEY = 'eraser_active_doc_id_v4';
 
 export const STARTER_DOCUMENTS: EraserDocument[] = [
   STARTER_AGENTIC_SCRAPER_DOCUMENT,
@@ -847,11 +847,13 @@ export function loadDocuments(): EraserDocument[] {
     const docs = JSON.parse(raw);
     if (!Array.isArray(docs) || docs.length === 0) return STARTER_DOCUMENTS;
 
-    // Ensure all starter documents (like Autonomous AI Web Scraper) are available
-    const existingIds = new Set(docs.map((d: EraserDocument) => d.id));
+    // Ensure all starter documents (like Autonomous AI Web Scraper) are available and up-to-date
     for (const starter of STARTER_DOCUMENTS) {
-      if (!existingIds.has(starter.id)) {
+      const idx = docs.findIndex((d: EraserDocument) => d.id === starter.id);
+      if (idx === -1) {
         docs.unshift(starter);
+      } else if (docs[idx].elements.length !== starter.elements.length) {
+        docs[idx] = starter;
       }
     }
     return docs.map((doc: EraserDocument) => ({

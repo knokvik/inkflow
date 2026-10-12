@@ -62,11 +62,92 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
     : fillColor;
 
   const titleColor = isDark ? '#F1F5F9' : '#0F172A';
-  const subColor = isDark ? '#94A3B8' : '#64748B';
+  const subColor = isDark ? '#94A3B8' : '#475569';
 
-  // Icon dimension proportional to node dimensions
-  const iconSize = Math.max(26, Math.min(width - 18, height - 28));
+  const isWideCard = width >= 160 && height <= 110;
+  const iconSize = isWideCard
+    ? Math.max(28, Math.min(38, height - 24))
+    : Math.max(26, Math.min(width - 18, height - 28));
   const iconSrc = iconDef.iconUrl || `/icons/${iconDef.id}.svg`;
+
+  const iconGraphic = (
+    <div
+      className="flex items-center justify-center shrink-0 transition-transform p-1 rounded-xl shadow-2xs"
+      style={{
+        width: `${iconSize}px`,
+        height: `${iconSize}px`,
+        backgroundColor: isDark ? `${iconDef.color}1c` : (iconDef.bgColor || `${iconDef.color}15`),
+        border: `1px solid ${iconDef.color}30`,
+      }}
+    >
+      {!imgError ? (
+        <img
+          src={iconSrc}
+          alt={label || iconDef.name}
+          onError={() => setImgError(true)}
+          className="w-full h-full object-contain pointer-events-none select-none drop-shadow-xs"
+          draggable={false}
+        />
+      ) : iconDef.svgPath ? (
+        <svg
+          viewBox="0 0 24 24"
+          className="w-full h-full overflow-visible drop-shadow-sm"
+          style={{ color: strokeColor }}
+          dangerouslySetInnerHTML={{ __html: iconDef.svgPath }}
+        />
+      ) : (
+        <div
+          className="w-full h-full rounded flex items-center justify-center text-xs font-bold"
+          style={{ backgroundColor: iconDef.bgColor, color: strokeColor }}
+        >
+          {iconDef.name.slice(0, 2).toUpperCase()}
+        </div>
+      )}
+    </div>
+  );
+
+  if (isWideCard) {
+    return (
+      <div
+        className="w-full h-full flex flex-row items-center gap-2.5 px-3 py-2 rounded-xl select-none transition-shadow overflow-hidden"
+        style={{
+          backgroundColor: bg,
+          border: `1.5px solid ${strokeColor}`,
+          boxShadow: isDark
+            ? '0 4px 12px rgba(0, 0, 0, 0.35)'
+            : '0 2px 8px rgba(0, 0, 0, 0.06)',
+        }}
+      >
+        {iconGraphic}
+
+        <div className="flex-1 min-w-0 flex flex-col justify-center text-left">
+          <div
+            className="font-semibold truncate text-[11.5px] leading-snug tracking-tight"
+            style={{
+              color: titleColor,
+              fontSize: `${fontSize || 12}px`,
+            }}
+            title={label || iconDef.name}
+          >
+            {label || iconDef.name}
+          </div>
+
+          {subtitle && (
+            <div
+              className="truncate text-[10px] leading-tight opacity-80 mt-0.5 whitespace-pre-line"
+              style={{
+                color: subColor,
+                fontSize: `${Math.max(9, Math.round((fontSize || 12) * 0.78))}px`,
+              }}
+              title={subtitle}
+            >
+              {subtitle}
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div
@@ -79,40 +160,7 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
           : '0 2px 8px rgba(0, 0, 0, 0.06)',
       }}
     >
-      {/* Centered Scalable Vector Icon Image with soft colored backdrop */}
-      <div
-        className="flex items-center justify-center shrink-0 transition-transform p-1 rounded-xl shadow-2xs"
-        style={{
-          width: `${iconSize}px`,
-          height: `${iconSize}px`,
-          backgroundColor: isDark ? `${iconDef.color}1c` : (iconDef.bgColor || `${iconDef.color}15`),
-          border: `1px solid ${iconDef.color}30`,
-        }}
-      >
-        {!imgError ? (
-          <img
-            src={iconSrc}
-            alt={label || iconDef.name}
-            onError={() => setImgError(true)}
-            className="w-full h-full object-contain pointer-events-none select-none drop-shadow-xs"
-            draggable={false}
-          />
-        ) : iconDef.svgPath ? (
-          <svg
-            viewBox="0 0 24 24"
-            className="w-full h-full overflow-visible drop-shadow-sm"
-            style={{ color: strokeColor }}
-            dangerouslySetInnerHTML={{ __html: iconDef.svgPath }}
-          />
-        ) : (
-          <div
-            className="w-full h-full rounded flex items-center justify-center text-xs font-bold"
-            style={{ backgroundColor: iconDef.bgColor, color: strokeColor }}
-          >
-            {iconDef.name.slice(0, 2).toUpperCase()}
-          </div>
-        )}
-      </div>
+      {iconGraphic}
 
       {/* Clean Title Below the Icon */}
       <div

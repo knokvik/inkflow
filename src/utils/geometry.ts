@@ -289,17 +289,17 @@ function avoidObstacles(points: Point[], obstacleBoxes: ObstacleBox[], targetEnd
   return result;
 }
 
-export function calculateOrthogonalPath(
+export function getOrthogonalWaypoints(
   start: Point,
   end: Point,
   fromAnchor?: AnchorPosition,
   toAnchor?: AnchorPosition,
   bendPoint?: Point,
   obstacles?: CanvasElement[]
-): string {
+): Point[] {
   // If points are very close, direct line
   if (Math.hypot(start.x - end.x, start.y - end.y) < 20) {
-    return `M ${start.x} ${start.y} L ${end.x} ${end.y}`;
+    return [start, end];
   }
 
   // If user provided custom bend waypoint, respect their placement
@@ -313,7 +313,7 @@ export function calculateOrthogonalPath(
     } else {
       manualPts = [start, { x: start.x, y: bendPoint.y }, { x: end.x, y: bendPoint.y }, end];
     }
-    return pointsToSvgPath(simplifyPoints(manualPts), 6);
+    return simplifyPoints(manualPts);
   }
 
   // Anchor stubs
@@ -390,7 +390,19 @@ export function calculateOrthogonalPath(
 
   const cleanInitial = simplifyPoints(initialWaypoints);
   const routedWaypoints = avoidObstacles(cleanInitial, validBoxes, end);
-  return pointsToSvgPath(simplifyPoints(routedWaypoints), 6);
+  return simplifyPoints(routedWaypoints);
+}
+
+export function calculateOrthogonalPath(
+  start: Point,
+  end: Point,
+  fromAnchor?: AnchorPosition,
+  toAnchor?: AnchorPosition,
+  bendPoint?: Point,
+  obstacles?: CanvasElement[]
+): string {
+  const waypoints = getOrthogonalWaypoints(start, end, fromAnchor, toAnchor, bendPoint, obstacles);
+  return pointsToSvgPath(waypoints, 6);
 }
 
 export function calculateCurvedPath(start: Point, end: Point, bendPoint?: Point): string {
@@ -433,6 +445,84 @@ export function getMidPoint(p1: Point, p2: Point): Point {
     x: (p1.x + p2.x) / 2,
     y: (p1.y + p2.y) / 2,
   };
+}
+
+/**
+ * Finds the exact midpoint along a sequence of polyline points
+ */
+export function getPolylineMidpoint(points: Point[]): Point {
+  if (points.length === 0) return { x: 0, y: 0 };
+  if (points.length === 1) return points[0];
+  if (points.length === 2) {
+    return {
+      x: Math.round((points[0].x + points[1].x) / 2),
+      y: Math.round((points[0].y + points[1].y) / 2),
+    };
+  }
+
+  // Calculate length of each segment
+  let totalLength = 0;
+  const segLengths: number[] = [];
+  for (let i = 0; i < points.length - 1; i++) {
+    const d = Math.hypot(points[i + 1].x - points[i].x, points[i + 1].y - points[i].y);
+    segLengths.push(d);
+    totalLength += d;
+  }
+
+  if (totalLength === 0) return points[0];
+
+  const halfLength = totalLength / 2;
+  let accumulated = 0;
+
+  for (let i = 0; i < segLengths.length; i++) {
+    const segLen = segLengths[i];
+    if (accumulated + segLen >= halfLength) {
+      const remaining = halfLength - accumulated;
+      const t = segLen > 0 ? remaining / segLen : 0.5;
+      return {
+        x: Math.round(points[i].x + t * (points[i + 1].x - points[i].x)),
+        y: Math.round(points[i].y + t * (points[i + 1].y - points[i].y)),
+      };
+    }
+    accumulated += segLen;
+  }
+
+  return points[points.length - 1];
+}
+
+/**
+ * Calculates the exact true midpoint along any connector wire (orthogonal, curved, or straight)
+ */
+export function getConnectorMidPoint(
+  start: Point,
+  end: Point,
+  routing: 'orthogonal' | 'curved' | 'straight' = 'orthogonal',
+  fromAnchor?: AnchorPosition,
+  toAnchor?: AnchorPosition,
+  bendPoint?: Point,
+  obstacles?: CanvasElement[]
+): Point {
+  if (bendPoint) {
+    return bendPoint;
+  }
+  if (routing === 'straight') {
+    return getMidPoint(start, end);
+  }
+  if (routing === 'curved') {
+    const dx = end.x - start.x;
+    const dy = end.y - start.y;
+    const cx1 = start.x + dx * 0.5;
+    const cy1 = start.y;
+    const cx2 = start.x + dx * 0.5;
+    const cy2 = end.y;
+    const t = 0.5;
+    const omt = 0.5;
+    const x = omt * omt * omt * start.x + 3 * omt * omt * t * cx1 + 3 * omt * t * t * cx2 + t * t * t * end.x;
+    const y = omt * omt * omt * start.y + 3 * omt * omt * t * cy1 + 3 * omt * t * t * cy2 + t * t * t * end.y;
+    return { x: Math.round(x), y: Math.round(y) };
+  }
+  const waypoints = getOrthogonalWaypoints(start, end, fromAnchor, toAnchor, bendPoint, obstacles);
+  return getPolylineMidpoint(waypoints);
 }
 
 export function isPointInElement(pt: Point, el: CanvasElement): boolean {

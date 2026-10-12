@@ -101,7 +101,10 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
 
       case 'frame':
         // Eraser Tier or Diagram Frame
-        const isOuterDiagram = element.frameTitle?.includes('Architecture') || element.frameTitle?.includes('Loop');
+        const isOuterDiagram =
+          element.frameTitle?.includes('Architecture') ||
+          element.frameTitle?.includes('Topology') ||
+          (width >= 1000 && height >= 700);
         const frameStroke = isDark
           ? style.strokeColor && !isBlueColor(style.strokeColor)
             ? style.strokeColor
@@ -109,31 +112,36 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
           : style.strokeColor && !isBlueColor(style.strokeColor)
             ? style.strokeColor
             : '#CBD5E1';
+
+        const frameBg = isOuterDiagram
+          ? isDark
+            ? 'rgba(255, 255, 255, 0.015)'
+            : '#FDFDFE'
+          : isDark
+          ? `${frameStroke}0f`
+          : `${frameStroke}0d`;
+
         return (
           <div
-            className="w-full h-full rounded-xl relative pointer-events-none"
+            className="w-full h-full rounded-2xl relative pointer-events-none transition-colors"
             style={{
               border: `1.5px solid ${frameStroke}`,
-              backgroundColor: isBlueColor(style.fillColor)
-                ? (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)')
-                : (style.fillColor || (isDark ? 'rgba(255, 255, 255, 0.03)' : 'rgba(0, 0, 0, 0.02)')),
+              backgroundColor: frameBg,
             }}
           >
             {/* Eraser Tag Badge */}
             {element.frameTitle && (
               <div
-                className="absolute top-2 left-3 px-2 py-0.5 rounded text-[11px] font-mono tracking-tight font-semibold flex items-center gap-1.5"
+                className="absolute top-2 left-3 px-2.5 py-0.5 rounded-md text-[11px] font-mono tracking-tight font-semibold flex items-center gap-1.5"
                 style={{
-                  backgroundColor: isOuterDiagram
-                    ? (isDark ? '#262626' : '#FFFFFF')
-                    : (isDark ? `${frameStroke}25` : `${frameStroke}18`),
+                  backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
                   color: isOuterDiagram
                     ? (isDark ? '#F1F5F9' : '#0F172A')
                     : (isDark
-                      ? (style.strokeColor && !isBlueColor(style.strokeColor) ? style.strokeColor : '#A1A1AA')
-                      : (style.strokeColor && !isBlueColor(style.strokeColor) ? style.strokeColor : '#525252')),
-                  border: `1px solid ${frameStroke}`,
-                  boxShadow: isOuterDiagram ? '0 1px 2px rgba(0,0,0,0.05)' : undefined,
+                      ? (style.strokeColor && !isBlueColor(style.strokeColor) ? style.strokeColor : '#E2E8F0')
+                      : (style.strokeColor && !isBlueColor(style.strokeColor) ? style.strokeColor : '#0F172A')),
+                  border: `1.2px solid ${frameStroke}`,
+                  boxShadow: isDark ? '0 2px 6px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.06)',
                 }}
               >
                 {isOuterDiagram && <span className="opacity-60 text-xs">⸤L</span>}

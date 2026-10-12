@@ -68,7 +68,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
   const isDark = theme === 'dark';
 
   const toolItemClass = (isActive: boolean, activeColor: string = 'text-white') =>
-    `relative w-9 h-9 flex items-center justify-center rounded-xl transition-all cursor-pointer group ${
+    `relative w-8 h-8 flex items-center justify-center rounded-lg transition-all cursor-pointer group ${
       isActive
         ? isDark
           ? `bg-[#2E2E2E] ${activeColor} shadow-xs ring-1 ring-white/10`
@@ -82,7 +82,7 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
     <>
       {/* LEFT VERTICAL PRIMARY TOOLBAR */}
       <aside
-        className={`absolute left-4 top-20 flex flex-col items-center gap-1 p-1.5 rounded-2xl border shadow-xl z-30 select-none transition-colors backdrop-blur-md ${
+        className={`absolute left-3.5 top-14 max-h-[calc(100vh-125px)] overflow-y-auto scrollbar-none flex flex-col items-center gap-0.5 p-1 rounded-xl border shadow-xl z-30 select-none transition-colors backdrop-blur-md ${
           isDark ? 'bg-[#141414]/95 border-[#262626]' : 'bg-white/95 border-neutral-200 shadow-neutral-200/50'
         }`}
       >
@@ -243,46 +243,46 @@ export const CanvasToolbar: React.FC<CanvasToolbarProps> = ({
       </div>
 
       {/* BOTTOM LEFT: UNDO, REDO & HELP */}
-      <div className="absolute bottom-5 left-5 flex items-center gap-2 z-30 select-none">
+      <div className="absolute bottom-3.5 left-3.5 flex items-center gap-1.5 z-30 select-none">
         <div
-          className={`flex items-center gap-1 p-1 rounded-xl border shadow-lg backdrop-blur-md transition-colors ${
+          className={`flex items-center gap-0.5 p-1 rounded-xl border shadow-lg backdrop-blur-md transition-colors ${
             isDark ? 'bg-[#141414]/95 border-[#262626]' : 'bg-white/95 border-neutral-200'
           }`}
         >
           <button
             onClick={onUndo}
             disabled={!canUndo}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors ${
               canUndo
                 ? isDark ? 'text-neutral-300 hover:bg-[#202020] hover:text-white' : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
                 : 'text-neutral-400/40 cursor-not-allowed'
             }`}
             title="Undo (Cmd+Z)"
           >
-            <Undo2 className="w-4 h-4" />
+            <Undo2 className="w-3.5 h-3.5" />
           </button>
           <button
             onClick={onRedo}
             disabled={!canRedo}
-            className={`p-2 rounded-lg transition-colors ${
+            className={`p-1.5 rounded-lg transition-colors ${
               canRedo
                 ? isDark ? 'text-neutral-300 hover:bg-[#202020] hover:text-white' : 'text-neutral-700 hover:bg-neutral-100 hover:text-neutral-900'
                 : 'text-neutral-400/40 cursor-not-allowed'
             }`}
             title="Redo (Cmd+Shift+Z)"
           >
-            <Redo2 className="w-4 h-4" />
+            <Redo2 className="w-3.5 h-3.5" />
           </button>
         </div>
 
         <button
           onClick={onOpenShortcuts}
-          className={`p-2 rounded-xl border shadow-lg backdrop-blur-md transition-colors ${
+          className={`p-1.5 rounded-xl border shadow-lg backdrop-blur-md transition-colors ${
             isDark ? 'bg-[#141414]/95 border-[#262626] text-neutral-400 hover:text-white hover:bg-[#202020]' : 'bg-white/95 border-neutral-200 text-neutral-600 hover:text-neutral-900'
           }`}
           title="Keyboard shortcuts (?)"
         >
-          <HelpCircle className="w-4 h-4" />
+          <HelpCircle className="w-3.5 h-3.5" />
         </button>
       </div>
     </>

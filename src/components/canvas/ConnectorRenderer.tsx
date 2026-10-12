@@ -1,6 +1,6 @@
 import React from 'react';
 import { CanvasElement, Point } from '../../types/canvas';
-import { getConnectorPath, getElementAnchor, getMidPoint } from '../../utils/geometry';
+import { getConnectorPath, getElementAnchor, getConnectorMidPoint } from '../../utils/geometry';
 
 interface ConnectorRendererProps {
   connector: CanvasElement;
@@ -67,7 +67,15 @@ export const ConnectorRenderer: React.FC<ConnectorRendererProps> = ({
     connector.bendPoint,
     obstacles
   );
-  const midPoint = getMidPoint(start, end);
+  const midPoint = getConnectorMidPoint(
+    start,
+    end,
+    routing || 'orthogonal',
+    fromAnchor,
+    toAnchor,
+    connector.bendPoint,
+    obstacles
+  );
   const bendPoint = connector.bendPoint || midPoint;
   const strokeColor =
     theme === 'dark'
@@ -78,6 +86,11 @@ export const ConnectorRenderer: React.FC<ConnectorRendererProps> = ({
         ? style.strokeColor
         : '#4B5563';
   const markerId = `arrowhead-${id}`;
+
+  const isLight = theme === 'light';
+  const pillFill = isLight ? '#FFFFFF' : '#181818';
+  const labelTextColor = isLight ? '#0F172A' : '#F8FAFC';
+  const pillWidth = Math.max(36, connectorLabel ? connectorLabel.length * 6.8 + 18 : 36);
 
   return (
     <g className="cursor-pointer group" onClick={onSelect}>
@@ -144,24 +157,25 @@ export const ConnectorRenderer: React.FC<ConnectorRendererProps> = ({
         >
           {/* Label Background Pill */}
           <rect
-            x={-((connectorLabel.length * 7 + 16) / 2)}
-            y={-12}
-            width={connectorLabel.length * 7 + 16}
+            x={-pillWidth / 2}
+            y={-11}
+            width={pillWidth}
             height={22}
-            rx={4}
-            fill={theme === 'light' ? '#FFFFFF' : '#1E1E1E'}
+            rx={5}
+            fill={pillFill}
             stroke={strokeColor}
-            strokeWidth={1}
+            strokeWidth={1.2}
             className="filter drop-shadow-sm"
           />
           {/* Text */}
           <text
             x={0}
-            y={3}
+            y={3.5}
             textAnchor="middle"
-            fill={style.textColor || (theme === 'light' ? '#374151' : '#EDEDED')}
-            fontSize={style.fontSize || 11}
-            fontFamily="monospace"
+            fill={labelTextColor}
+            fontSize={style.fontSize || 10.5}
+            fontWeight={600}
+            fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
             className="select-none pointer-events-none"
           >
             {connectorLabel}
