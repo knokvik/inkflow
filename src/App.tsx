@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef, useCallback } from 'react';
+import React, { useState, useEffect, useRef, useCallback, useMemo } from 'react';
 import {
   CanvasElement,
   EraserDocument,
@@ -31,8 +31,19 @@ export function App() {
   const [documents, setDocuments] = useState<EraserDocument[]>(() => loadDocuments());
   const [activeDocId, setActiveDocIdState] = useState<string>(() => getActiveDocumentId());
 
-  // Active document
-  const activeDoc = documents.find((d) => d.id === activeDocId) || documents[0] || STARTER_DOCUMENTS[0];
+  // Active document with guaranteed fallback so canvas is never blank or missing
+  const rawActiveDoc = documents.find((d) => d.id === activeDocId) || documents[0] || STARTER_DOCUMENTS[0];
+  const activeDoc: EraserDocument = useMemo(() => {
+    if (!rawActiveDoc.elements || rawActiveDoc.elements.length === 0) {
+      const fallback = STARTER_DOCUMENTS.find((s) => s.id === rawActiveDoc.id) || STARTER_DOCUMENTS[0];
+      return {
+        ...rawActiveDoc,
+        elements: fallback.elements,
+        canvasSettings: rawActiveDoc.canvasSettings || fallback.canvasSettings,
+      };
+    }
+    return rawActiveDoc;
+  }, [rawActiveDoc]);
 
   // Tool & Canvas UI state
   const [activeTool, setActiveTool] = useState<ToolType>('select');
@@ -148,6 +159,27 @@ export function App() {
     }
   }, [updateActiveDoc]);
 
+  // Automatically sync viewport, zoom, pan, theme, and history whenever active document changes
+  useEffect(() => {
+    if (activeDoc?.canvasSettings) {
+      setZoom(activeDoc.canvasSettings.zoom ?? 1);
+      setPan(activeDoc.canvasSettings.pan ?? { x: 50, y: 50 });
+      if (activeDoc.canvasSettings.grid) setGridMode(activeDoc.canvasSettings.grid);
+      if (activeDoc.canvasSettings.roughStyle !== undefined) setRoughStyle(activeDoc.canvasSettings.roughStyle);
+      if (activeDoc.canvasSettings.snapToGrid !== undefined) setSnapEnabled(activeDoc.canvasSettings.snapToGrid);
+    }
+    if (activeDoc?.theme) {
+      setTheme(activeDoc.theme);
+    }
+    if (activeDoc?.viewMode) {
+      setViewMode(activeDoc.viewMode);
+    }
+    historyRef.current = [activeDoc.elements || []];
+    historyIndexRef.current = 0;
+    setHistoryRenderTrigger((c) => c + 1);
+    setSelectedIds([]);
+  }, [activeDocId]);
+
   // Real-time live synchronization with Local AI Bridge (Port 5173 /api/stream)
   useEffect(() => {
     let evtSource: EventSource | null = null;
@@ -172,6 +204,10 @@ export function App() {
           // ignore parsing error
         }
       };
+      evtSource.onerror = () => {
+        // Quietly close if local bridge server is not streaming
+        evtSource?.close();
+      };
     } catch (e) {
       // ignore
     }
@@ -182,6 +218,7 @@ export function App() {
 
   // Sync canvas state to /api/diagram so external OpenCode / local AIs can read it anytime
   useEffect(() => {
+    if (!activeDoc || !activeDoc.elements || activeDoc.elements.length === 0) return;
     const timer = setTimeout(() => {
       try {
         fetch('/api/diagram', {
@@ -195,7 +232,7 @@ export function App() {
           }),
         }).catch(() => {});
       } catch (e) {}
-    }, 300);
+    }, 500);
     return () => clearTimeout(timer);
   }, [activeDoc.elements, activeDoc.content, activeDoc.title]);
 
