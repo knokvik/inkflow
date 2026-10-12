@@ -40,14 +40,9 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
     );
   };
   const iconDef = getIconDefinition(iconName);
-  const rawColor = color || iconDef.color;
-  const strokeColor = isDark
-    ? rawColor && !isBlue(rawColor)
-      ? rawColor
-      : '#525252'
-    : rawColor && !isBlue(rawColor)
-      ? rawColor
-      : '#27272A';
+  const strokeColor = color && color !== '#525252' && color !== '#27272A'
+    ? color
+    : iconDef.color || (isDark ? '#525252' : '#27272A');
 
   const isDefaultBg =
     !fillColor ||
@@ -84,12 +79,14 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
           : '0 2px 8px rgba(0, 0, 0, 0.06)',
       }}
     >
-      {/* Centered Scalable Vector Icon Image */}
+      {/* Centered Scalable Vector Icon Image with soft colored backdrop */}
       <div
-        className="flex items-center justify-center shrink-0 transition-transform"
+        className="flex items-center justify-center shrink-0 transition-transform p-1 rounded-xl shadow-2xs"
         style={{
           width: `${iconSize}px`,
           height: `${iconSize}px`,
+          backgroundColor: isDark ? `${iconDef.color}1c` : (iconDef.bgColor || `${iconDef.color}15`),
+          border: `1px solid ${iconDef.color}30`,
         }}
       >
         {!imgError ? (

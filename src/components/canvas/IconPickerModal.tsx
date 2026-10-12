@@ -186,8 +186,11 @@ export const IconPickerModal: React.FC<IconPickerModalProps> = ({
                 }`}
               >
                 <div
-                  className="w-12 h-12 rounded-lg flex items-center justify-center mb-2 p-1.5 transition-colors"
-                  style={{ backgroundColor: isDark ? 'rgba(255,255,255,0.06)' : icon.bgColor }}
+                  className="w-12 h-12 rounded-xl flex items-center justify-center mb-2 p-1.5 transition-all shadow-2xs group-hover:scale-105"
+                  style={{
+                    backgroundColor: isDark ? `${icon.color}1c` : (icon.bgColor || `${icon.color}15`),
+                    border: `1.5px solid ${icon.color}35`,
+                  }}
                 >
                   <img
                     src={iconSrc}
@@ -209,7 +212,13 @@ export const IconPickerModal: React.FC<IconPickerModalProps> = ({
                 >
                   {icon.name}
                 </span>
-                <span className="text-[10px] text-neutral-400 uppercase font-mono mt-0.5 font-medium truncate max-w-full">
+                <span
+                  className="text-[10px] uppercase font-mono mt-1 font-semibold truncate max-w-full px-1.5 py-0.5 rounded-md"
+                  style={{
+                    color: icon.color,
+                    backgroundColor: isDark ? `${icon.color}20` : `${icon.color}12`,
+                  }}
+                >
                   {icon.categoryLabel || icon.category}
                 </span>
               </button>
