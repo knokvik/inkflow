@@ -26,21 +26,40 @@ Inkflow provides a dedicated CLI at `~/.local/bin/inkflow` (available globally i
 
 ---
 
-## 2. How Incoming AI Models Know What to Return
+## 2. How Incoming AI Models Connect (Unified GET Context & Sandbox)
 
-When an AI model interacts with Inkflow, it can query two self-documenting local HTTP endpoints:
+Inkflow turns port `5173` into a self-describing, intelligent architectural bridge:
 
-### Endpoint A: Machine-Readable Schema
+### 2.1 Unified AI Context (One-Shot Retrieval)
+Any external AI model, agent, or curl script querying port 5173 can fetch **100% of the live state, prompt, schema, design rules, and sandbox boundaries in a single GET request**:
+
 ```bash
-curl http://localhost:5173/api/schema
-```
-Returns the exact JSON schema definition for all canvas elements, grid coordinates, and connectors.
+# Direct endpoint
+curl http://localhost:5173/api/context
 
-### Endpoint B: Pre-Baked System Prompt
-```bash
-curl http://localhost:5173/api/prompt
+# Or directly on port 5173 root with JSON header:
+curl -H "Accept: application/json" http://localhost:5173/
+
+# Or using the global CLI:
+inkflow context
 ```
-Returns the exact system prompt to instruct any LLM on how to produce Inkflow diagrams.
+
+### 2.2 Security & Role Sandbox Boundary
+> 🛡️ **Strict Visual Architecture Sandbox Active**
+> - **Permitted Actions**: The AI has full control over creating and mutating visual architecture elements (frames, service cards, connectors, custom shapes) and updating technical markdown specifications (`doc`).
+> - **Restricted Actions**: The AI **cannot** access, edit, or overwrite application source code (`*.ts`, `*.tsx`, `*.json`, configs). Arbitrary code execution and shell access are blocked.
+> - **Server-Side Enforcement**: The `POST /api/diagram` endpoint sanitizes and whitelists every incoming element against allowed visual properties only.
+
+### 2.3 Individual Endpoints
+| Endpoint | Method | Purpose |
+|---|---|---|
+| `/api/context` | `GET` | Complete unified context (state + contract + prompt + schema) |
+| `/api/diagram` | `GET` | Read current live canvas state & elements |
+| `/api/diagram` | `POST` | Live edit / create visual elements on canvas |
+| `/api/schema` | `GET` | Machine-readable JSON schema specification |
+| `/api/prompt` | `GET` | Copy-pasteable system prompt for incoming LLMs |
+| `/api/stream` | `GET` | Live SSE stream for real-time canvas change events |
+| `/api/open-chrome`| `POST`| Opens the app in Google Chrome |
 
 ---
 

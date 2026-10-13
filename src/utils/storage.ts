@@ -1,11 +1,13 @@
 import { EraserDocument } from '../types/canvas';
 import { STARTER_AGENTIC_SCRAPER_DOCUMENT } from '../constants/starterScraperDoc';
+import { STARTER_RURAL_HEALTH_DOCUMENT } from '../constants/ruralHealthDoc';
 
 const STORAGE_KEY = 'eraser_documents_v5';
 const ACTIVE_DOC_KEY = 'eraser_active_doc_id_v5';
 
 export const STARTER_DOCUMENTS: EraserDocument[] = [
   STARTER_AGENTIC_SCRAPER_DOCUMENT,
+  STARTER_RURAL_HEALTH_DOCUMENT,
   {
     id: 'starter-verdant',
     title: 'WeMakeDevs',

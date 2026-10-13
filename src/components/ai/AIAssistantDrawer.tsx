@@ -12,6 +12,7 @@ import {
   Terminal,
   Activity,
   Radio,
+  ShieldCheck,
 } from 'lucide-react';
 import { CanvasElement, AIProviderConfig, AIMessage } from '../../types/canvas';
 import { processAIPrompt } from '../../services/aiService';
@@ -137,6 +138,13 @@ You can also prompt me directly below to generate or mutate architecture diagram
 
   const [copiedPrompt, setCopiedPrompt] = useState(false);
   const [copiedSchema, setCopiedSchema] = useState(false);
+  const [copiedContext, setCopiedContext] = useState(false);
+
+  const copyContextSnippet = () => {
+    navigator.clipboard.writeText('curl http://localhost:5173/api/context');
+    setCopiedContext(true);
+    setTimeout(() => setCopiedContext(false), 2000);
+  };
 
   const copyBridgeSnippet = () => {
     const snippet = `# Read live diagram:
@@ -369,10 +377,11 @@ curl -X POST http://localhost:5173/api/diagram \\
       {activeTab === 'bridge' && (
         <div className="flex-1 overflow-y-auto p-5 space-y-4 text-xs select-text">
           {/* Bridge Status Card */}
-          <div className={`p-4 rounded-xl border ${
+          {/* Bridge Status & Security Sandbox Card */}
+          <div className={`p-4 rounded-xl border space-y-2.5 ${
             isDark ? 'bg-[#181B26] border-[#282D3D]' : 'bg-slate-50 border-slate-200'
           }`}>
-            <div className="flex items-center justify-between mb-2">
+            <div className="flex items-center justify-between">
               <span className="font-semibold flex items-center gap-2">
                 <Activity className="w-4 h-4 text-emerald-500" />
                 Local REST & SSE Bridge
@@ -381,18 +390,29 @@ curl -X POST http://localhost:5173/api/diagram \\
                 ACTIVE :5173
               </span>
             </div>
-            <p className="text-[11px] text-slate-400 leading-relaxed mb-3">
-              Inkflow listens locally on port <strong>5173</strong>. Any tool, script, or AI agent (OpenCode, Antigravity, Ollama, Python, curl) can read the diagram terms and make live edits in real-time.
+
+            {/* Sandbox Notice */}
+            <div className={`p-2 rounded-lg border flex items-center gap-2 text-[10.5px] ${
+              isDark ? 'bg-emerald-950/20 border-emerald-500/30 text-emerald-300' : 'bg-emerald-50 border-emerald-300 text-emerald-800'
+            }`}>
+              <ShieldCheck className="w-4 h-4 shrink-0 text-emerald-400" />
+              <span>
+                <strong>Sandbox Active:</strong> External AI models can create/modify canvas components & docs. Application source code is strictly protected.
+              </span>
+            </div>
+
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Inkflow listens locally on port <strong>5173</strong>. Connect any AI agent (OpenCode, Antigravity, Ollama, Python, curl) to read unified context or live edit diagrams.
             </p>
 
             <div className="flex items-center justify-between p-2 rounded-lg bg-black/10 dark:bg-black/30 font-mono text-[11px]">
-              <span>http://localhost:5173/api/diagram</span>
+              <span>http://localhost:5173/api/context</span>
               <button
-                onClick={copyBridgeSnippet}
+                onClick={copyContextSnippet}
                 className="flex items-center gap-1 text-blue-500 hover:text-blue-600 font-sans text-xs font-semibold"
               >
-                {copied ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
-                {copied ? 'Copied' : 'Copy'}
+                {copiedContext ? <Check className="w-3.5 h-3.5 text-emerald-500" /> : <Copy className="w-3.5 h-3.5" />}
+                {copiedContext ? 'Copied' : 'Copy'}
               </button>
             </div>
           </div>
@@ -401,12 +421,12 @@ curl -X POST http://localhost:5173/api/diagram \\
           <div className="space-y-2">
             <h3 className="font-bold text-xs flex items-center gap-1.5">
               <Terminal className="w-3.5 h-3.5 text-blue-500" />
-              1. How OpenCode / Local AI Reads the Canvas
+              1. Unified AI Context (State + Prompt + Schema + Sandbox)
             </h3>
             <pre className={`p-3 rounded-lg border font-mono text-[10.5px] overflow-x-auto ${
               isDark ? 'bg-[#0E1018] border-[#282D3D] text-emerald-400' : 'bg-slate-900 border-slate-800 text-emerald-400'
             }`}>
-{`curl http://localhost:5173/api/diagram`}
+{`curl http://localhost:5173/api/context`}
             </pre>
           </div>
 
@@ -430,13 +450,23 @@ curl -X POST http://localhost:5173/api/diagram \\
           }`}>
             <h3 className="font-bold text-xs flex items-center gap-1.5 text-amber-500">
               <Sparkles className="w-3.5 h-3.5" />
-              3. How Any AI Model Knows What to Return
+              3. AI Integration Contracts
             </h3>
             <p className="text-[11px] text-slate-400 leading-relaxed">
               Feed these contracts to any LLM (Claude, ChatGPT, Ollama, DeepSeek) so it formats diagrams that Inkflow renders instantly:
             </p>
 
             <div className="flex flex-col gap-2 pt-1">
+              <button
+                onClick={copyContextSnippet}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-medium text-xs transition-colors shadow-sm"
+              >
+                <span className="flex items-center gap-1.5 font-mono text-[11px]">
+                  <span>curl :5173/api/context</span>
+                </span>
+                {copiedContext ? <Check className="w-3.5 h-3.5 text-white" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+
               <button
                 onClick={copyPromptSnippet}
                 className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition-colors shadow-sm"

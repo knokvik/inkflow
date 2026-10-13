@@ -39,6 +39,20 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
       ].includes(l)
     );
   };
+  const isLightColor = (hex?: string) => {
+    if (!hex || hex === 'transparent') return false;
+    const l = hex.toLowerCase().trim();
+    if (['#fff', '#ffffff', '#f8fafc', '#f1f5f9', '#fef9c3', '#fdfdfe', '#fff7ed', '#f0fdf4', '#eff6ff', '#faf5ff'].includes(l)) return true;
+    if (l.startsWith('#') && (l.length === 7 || l.length === 9)) {
+      const r = parseInt(l.slice(1, 3), 16);
+      const g = parseInt(l.slice(3, 5), 16);
+      const b = parseInt(l.slice(5, 7), 16);
+      if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+        return (0.299 * r + 0.587 * g + 0.114 * b) > 175;
+      }
+    }
+    return false;
+  };
   const iconDef = getIconDefinition(iconName);
   const strokeColor = color && color !== '#525252' && color !== '#27272A'
     ? color
@@ -55,13 +69,11 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
     isBlue(fillColor);
 
   // Subtle clean card or user-chosen background
-  const bg = isDefaultBg
-    ? isDark
-      ? '#242424'
-      : '#FFFFFF'
-    : fillColor;
+  const bg = isDark
+    ? (isDefaultBg || isLightColor(fillColor) ? '#222224' : fillColor)
+    : (isDefaultBg ? '#FFFFFF' : fillColor);
 
-  const titleColor = isDark ? '#F1F5F9' : '#0F172A';
+  const titleColor = isDark ? '#F8FAFC' : '#0F172A';
   const subColor = isDark ? '#94A3B8' : '#475569';
 
   const isWideCard = width >= 160 && height <= 110;
@@ -134,7 +146,7 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
 
           {subtitle && (
             <div
-              className="truncate text-[10px] leading-tight opacity-80 mt-0.5 whitespace-pre-line"
+              className="line-clamp-2 text-[10px] leading-tight opacity-85 mt-0.5 whitespace-pre-line"
               style={{
                 color: subColor,
                 fontSize: `${Math.max(9, Math.round((fontSize || 12) * 0.78))}px`,

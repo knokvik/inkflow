@@ -27,6 +27,21 @@ export const isBlueColor = (col?: string) => {
   );
 };
 
+export const isLightColor = (hex?: string) => {
+  if (!hex || hex === 'transparent') return false;
+  const l = hex.toLowerCase().trim();
+  if (['#fff', '#ffffff', '#f8fafc', '#f1f5f9', '#fef9c3', '#fdfdfe', '#fff7ed', '#f0fdf4', '#eff6ff', '#faf5ff'].includes(l)) return true;
+  if (l.startsWith('#') && (l.length === 7 || l.length === 9)) {
+    const r = parseInt(l.slice(1, 3), 16);
+    const g = parseInt(l.slice(3, 5), 16);
+    const b = parseInt(l.slice(5, 7), 16);
+    if (!isNaN(r) && !isNaN(g) && !isNaN(b)) {
+      return (0.299 * r + 0.587 * g + 0.114 * b) > 175;
+    }
+  }
+  return false;
+};
+
 export const ElementRenderer: React.FC<ElementRendererProps> = ({
   element,
   isSelected,
@@ -340,11 +355,11 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
           style.fillColor === '#0F1117' ||
           style.fillColor === '#10121C' ||
           isBlueColor(style.fillColor);
-        const defaultCardBg = isDefaultShapeBg
-          ? (isDark ? '#242424' : '#FFFFFF')
-          : style.fillColor;
-        const defaultTitleCol = isDark ? '#F1F5F9' : '#0F172A';
-        const defaultSubCol = isDark ? '#94A3B8' : '#64748B';
+        const defaultCardBg = isDark
+          ? (isDefaultShapeBg || isLightColor(style.fillColor) ? '#222224' : style.fillColor)
+          : (isDefaultShapeBg ? '#FFFFFF' : style.fillColor);
+        const defaultTitleCol = isDark ? '#F8FAFC' : '#0F172A';
+        const defaultSubCol = isDark ? '#94A3B8' : '#475569';
 
         return (
           <div
@@ -387,7 +402,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
 
             {subtitle && (
               <div
-                className="leading-tight mt-1 whitespace-pre-line"
+                className="line-clamp-3 leading-tight mt-1 whitespace-pre-line"
                 style={{
                   color: defaultSubCol,
                   fontSize: `${Math.max(8.5, Math.round((style.fontSize || 14) * 0.75))}px`,
