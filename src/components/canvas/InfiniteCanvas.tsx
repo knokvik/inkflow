@@ -868,6 +868,12 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       return;
     }
 
+    // If a creation/drawing tool is active, let canvas draw/create the shape even if clicking over an existing element!
+    if (activeTool !== 'select' && activeTool !== 'connector') {
+      handleMouseDown(e);
+      return;
+    }
+
     // If connector tool is active, start drawing connector from this element!
     if (activeTool === 'connector') {
       const worldPoint = screenToWorld(e.clientX, e.clientY);
@@ -885,31 +891,79 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       return;
     }
 
+    const worldPoint = screenToWorld(e.clientX, e.clientY);
+
+    // Deep / Cycle selection: find all non-connector elements under the cursor
+    const hits = elements.filter(
+      (el) =>
+        el.type !== 'connector' &&
+        el.type !== 'pen' &&
+        isPointInElement(worldPoint, el)
+    );
+
+    let targetElement = element;
+    if (hits.length > 1) {
+      // Sort hits: non-frames first, then smallest area (deepest child) to largest area (container)
+      const sortedHits = [...hits].sort((a, b) => {
+        if (a.type !== 'frame' && b.type === 'frame') return -1;
+        if (a.type === 'frame' && b.type !== 'frame') return 1;
+        const aArea = a.width * a.height;
+        const bArea = b.width * b.height;
+        return aArea - bArea;
+      });
+
+      // If the top hit is already selected and user clicks again, cycle to the next element (outer container)
+      const currentIdx = sortedHits.findIndex((h) => selectedIds.includes(h.id));
+      if (currentIdx !== -1 && !e.shiftKey) {
+        targetElement = sortedHits[(currentIdx + 1) % sortedHits.length];
+      } else {
+        targetElement = sortedHits[0];
+      }
+    }
+
     // Multi-select with Shift
     if (e.shiftKey) {
-      if (selectedIds.includes(element.id)) {
-        onSelectedIdsChange(selectedIds.filter((id) => id !== element.id));
+      if (selectedIds.includes(targetElement.id)) {
+        onSelectedIdsChange(selectedIds.filter((id) => id !== targetElement.id));
       } else {
-        onSelectedIdsChange([...selectedIds, element.id]);
+        onSelectedIdsChange([...selectedIds, targetElement.id]);
       }
     } else {
-      if (!selectedIds.includes(element.id)) {
-        onSelectedIdsChange([element.id]);
+      if (!selectedIds.includes(targetElement.id)) {
+        onSelectedIdsChange([targetElement.id]);
       }
     }
 
     // Record initial drag positions for all selected elements
-    const worldPoint = screenToWorld(e.clientX, e.clientY);
     setDragStartPoint(worldPoint);
     setIsDraggingElements(true);
 
     const positions = new Map<string, Point>();
-    const effectiveSelected = selectedIds.includes(element.id) ? selectedIds : [element.id];
+    const effectiveSelected = selectedIds.includes(targetElement.id) ? selectedIds : [targetElement.id];
     for (const el of elements) {
       if (effectiveSelected.includes(el.id)) {
         positions.set(el.id, { x: el.x, y: el.y });
       }
     }
+
+    // If any frame is being dragged, also move all elements completely enclosed inside that frame
+    for (const selectedId of effectiveSelected) {
+      const frameEl = elements.find((el) => el.id === selectedId && el.type === 'frame');
+      if (frameEl) {
+        for (const child of elements) {
+          if (
+            child.id !== frameEl.id &&
+            child.x >= frameEl.x &&
+            child.x + child.width <= frameEl.x + frameEl.width &&
+            child.y >= frameEl.y &&
+            child.y + child.height <= frameEl.y + frameEl.height
+          ) {
+            positions.set(child.id, { x: child.x, y: child.y });
+          }
+        }
+      }
+    }
+
     setDragInitialPositions(positions);
   };
 
@@ -1007,7 +1061,24 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   // Connectors, Pens & Shapes split
   const connectors = elements.filter((e) => e.type === 'connector');
   const pens = elements.filter((e) => e.type === 'pen');
-  const nodes = elements.filter((e) => e.type !== 'connector' && e.type !== 'pen');
+  const nodes = elements
+    .filter((e) => e.type !== 'connector' && e.type !== 'pen')
+    .slice()
+    .sort((a, b) => {
+      // Frames are always rendered in the background layer
+      if (a.type === 'frame' && b.type !== 'frame') return -1;
+      if (b.type === 'frame' && a.type !== 'frame') return 1;
+
+      // Primary: zIndex ascending
+      const zA = a.zIndex || 10;
+      const zB = b.zIndex || 10;
+      if (zA !== zB) return zA - zB;
+
+      // Secondary: larger area rendered first (in background), smaller area rendered in front
+      const areaA = a.width * a.height;
+      const areaB = b.width * b.height;
+      return areaB - areaA;
+    });
 
   // Background class
   const gridClass =

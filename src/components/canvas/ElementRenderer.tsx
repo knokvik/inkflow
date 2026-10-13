@@ -190,10 +190,21 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
               backgroundColor: frameBg,
             }}
           >
+            {/* Clickable perimeter border frame zone so users can drag/select the frame by clicking its edge */}
+            <div
+              className="absolute inset-0 rounded-2xl pointer-events-auto cursor-move"
+              style={{
+                clipPath:
+                  'polygon(0% 0%, 100% 0%, 100% 100%, 0% 100%, 0% 12px, 12px 12px, 12px calc(100% - 12px), calc(100% - 12px) calc(100% - 12px), calc(100% - 12px) 12px, 0% 12px)',
+              }}
+              onMouseDown={onSelect}
+              onDoubleClick={onDoubleClick}
+            />
+
             {/* Eraser Tag Badge */}
             {(element.frameTitle || isEditing) && (
               <div
-                className="absolute top-2 left-3 px-2.5 py-0.5 rounded-md text-[11px] font-mono tracking-tight font-semibold flex items-center gap-1.5 pointer-events-auto"
+                className="absolute top-2 left-3 px-2.5 py-0.5 rounded-md text-[11px] font-mono tracking-tight font-semibold flex items-center gap-1.5 pointer-events-auto cursor-move"
                 style={{
                   backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
                   color: isOuterDiagram
@@ -204,6 +215,8 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
                   border: `1.2px solid ${frameStroke}`,
                   boxShadow: isDark ? '0 2px 6px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.06)',
                 }}
+                onMouseDown={onSelect}
+                onDoubleClick={onDoubleClick}
               >
                 {isOuterDiagram && <span className="opacity-60 text-xs">⸤L</span>}
                 {isEditing ? (
@@ -720,10 +733,14 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
     }
   };
 
+  const isFrame = type === 'frame';
+
   return (
     <div
       id={`canvas-el-${id}`}
-      className={`absolute group cursor-move select-none transition-shadow ${
+      className={`absolute group select-none transition-shadow ${
+        isFrame ? 'pointer-events-none' : 'cursor-move'
+      } ${
         isSelected ? 'ring-2 ring-neutral-400 dark:ring-neutral-400 ring-offset-2 ring-offset-white dark:ring-offset-[#1E1E1E]' : ''
       }`}
       style={{
@@ -732,8 +749,8 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
         height: `${height}px`,
         zIndex: element.zIndex || 10,
       }}
-      onMouseDown={onSelect}
-      onDoubleClick={onDoubleClick}
+      onMouseDown={isFrame ? undefined : onSelect}
+      onDoubleClick={isFrame ? undefined : onDoubleClick}
     >
       {/* Shape Body */}
       {renderShapeBody()}
@@ -837,49 +854,49 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       {isSelected && !isEditing && (
         <>
           <div
-            className={`absolute -top-1.5 -left-1.5 w-2.5 h-2.5 rounded-xs cursor-nwse-resize z-50 shadow-xs border ${
+            className={`absolute -top-1.5 -left-1.5 w-2.5 h-2.5 rounded-xs cursor-nwse-resize z-50 shadow-xs border pointer-events-auto ${
               isDark ? 'bg-[#2A2A2A] border-neutral-400' : 'bg-white border-neutral-600'
             }`}
             onMouseDown={(e) => onStartResize(e, 'nw')}
           />
           <div
-            className={`absolute -top-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-xs cursor-ns-resize z-50 shadow-xs border ${
+            className={`absolute -top-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-xs cursor-ns-resize z-50 shadow-xs border pointer-events-auto ${
               isDark ? 'bg-[#2A2A2A] border-neutral-400' : 'bg-white border-neutral-600'
             }`}
             onMouseDown={(e) => onStartResize(e, 'n')}
           />
           <div
-            className={`absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-xs cursor-nesw-resize z-50 shadow-xs border ${
+            className={`absolute -top-1.5 -right-1.5 w-2.5 h-2.5 rounded-xs cursor-nesw-resize z-50 shadow-xs border pointer-events-auto ${
               isDark ? 'bg-[#2A2A2A] border-neutral-400' : 'bg-white border-neutral-600'
             }`}
             onMouseDown={(e) => onStartResize(e, 'ne')}
           />
           <div
-            className={`absolute top-1/2 -translate-y-1/2 -right-1.5 w-2.5 h-2.5 rounded-xs cursor-ew-resize z-50 shadow-xs border ${
+            className={`absolute top-1/2 -translate-y-1/2 -right-1.5 w-2.5 h-2.5 rounded-xs cursor-ew-resize z-50 shadow-xs border pointer-events-auto ${
               isDark ? 'bg-[#2A2A2A] border-neutral-400' : 'bg-white border-neutral-600'
             }`}
             onMouseDown={(e) => onStartResize(e, 'e')}
           />
           <div
-            className={`absolute -bottom-1.5 -right-1.5 w-2.5 h-2.5 rounded-xs cursor-nwse-resize z-50 shadow-xs border ${
+            className={`absolute -bottom-1.5 -right-1.5 w-2.5 h-2.5 rounded-xs cursor-nwse-resize z-50 shadow-xs border pointer-events-auto ${
               isDark ? 'bg-[#2A2A2A] border-neutral-400' : 'bg-white border-neutral-600'
             }`}
             onMouseDown={(e) => onStartResize(e, 'se')}
           />
           <div
-            className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-xs cursor-ns-resize z-50 shadow-xs border ${
+            className={`absolute -bottom-1.5 left-1/2 -translate-x-1/2 w-2.5 h-2.5 rounded-xs cursor-ns-resize z-50 shadow-xs border pointer-events-auto ${
               isDark ? 'bg-[#2A2A2A] border-neutral-400' : 'bg-white border-neutral-600'
             }`}
             onMouseDown={(e) => onStartResize(e, 's')}
           />
           <div
-            className={`absolute -bottom-1.5 -left-1.5 w-2.5 h-2.5 rounded-xs cursor-nesw-resize z-50 shadow-xs border ${
+            className={`absolute -bottom-1.5 -left-1.5 w-2.5 h-2.5 rounded-xs cursor-nesw-resize z-50 shadow-xs border pointer-events-auto ${
               isDark ? 'bg-[#2A2A2A] border-neutral-400' : 'bg-white border-neutral-600'
             }`}
             onMouseDown={(e) => onStartResize(e, 'sw')}
           />
           <div
-            className={`absolute top-1/2 -translate-y-1/2 -left-1.5 w-2.5 h-2.5 rounded-xs cursor-ew-resize z-50 shadow-xs border ${
+            className={`absolute top-1/2 -translate-y-1/2 -left-1.5 w-2.5 h-2.5 rounded-xs cursor-ew-resize z-50 shadow-xs border pointer-events-auto ${
               isDark ? 'bg-[#2A2A2A] border-neutral-400' : 'bg-white border-neutral-600'
             }`}
             onMouseDown={(e) => onStartResize(e, 'w')}
