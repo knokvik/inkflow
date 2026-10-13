@@ -135,6 +135,9 @@ You can also prompt me directly below to generate or mutate architecture diagram
     }
   };
 
+  const [copiedPrompt, setCopiedPrompt] = useState(false);
+  const [copiedSchema, setCopiedSchema] = useState(false);
+
   const copyBridgeSnippet = () => {
     const snippet = `# Read live diagram:
 curl http://localhost:5173/api/diagram
@@ -146,6 +149,30 @@ curl -X POST http://localhost:5173/api/diagram \\
     navigator.clipboard.writeText(snippet);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
+  };
+
+  const copyPromptSnippet = async () => {
+    try {
+      const res = await fetch('/api/prompt');
+      const text = await res.text();
+      navigator.clipboard.writeText(text);
+      setCopiedPrompt(true);
+      setTimeout(() => setCopiedPrompt(false), 2000);
+    } catch {
+      navigator.clipboard.writeText('curl http://localhost:5173/api/prompt');
+    }
+  };
+
+  const copySchemaSnippet = async () => {
+    try {
+      const res = await fetch('/api/schema');
+      const json = await res.json();
+      navigator.clipboard.writeText(JSON.stringify(json, null, 2));
+      setCopiedSchema(true);
+      setTimeout(() => setCopiedSchema(false), 2000);
+    } catch {
+      navigator.clipboard.writeText('curl http://localhost:5173/api/schema');
+    }
   };
 
   const QUICK_PROMPTS = [
@@ -395,6 +422,72 @@ curl -X POST http://localhost:5173/api/diagram \\
   -H "Content-Type: application/json" \\
   -d '{"title": "Updated Specs", "elements": [...] }'`}
             </pre>
+          </div>
+
+          {/* How Any Incoming AI Model Knows Exactly What to Return */}
+          <div className={`p-4 rounded-xl border space-y-3 ${
+            isDark ? 'bg-[#181B26] border-[#282D3D]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <h3 className="font-bold text-xs flex items-center gap-1.5 text-amber-500">
+              <Sparkles className="w-3.5 h-3.5" />
+              3. How Any AI Model Knows What to Return
+            </h3>
+            <p className="text-[11px] text-slate-400 leading-relaxed">
+              Feed these contracts to any LLM (Claude, ChatGPT, Ollama, DeepSeek) so it formats diagrams that Inkflow renders instantly:
+            </p>
+
+            <div className="flex flex-col gap-2 pt-1">
+              <button
+                onClick={copyPromptSnippet}
+                className="w-full flex items-center justify-between px-3 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-medium text-xs transition-colors shadow-sm"
+              >
+                <span className="flex items-center gap-1.5">
+                  <Terminal className="w-3.5 h-3.5" />
+                  Copy Model System Prompt
+                </span>
+                {copiedPrompt ? <Check className="w-3.5 h-3.5 text-emerald-300" /> : <Copy className="w-3.5 h-3.5" />}
+              </button>
+
+              <button
+                onClick={copySchemaSnippet}
+                className={`w-full flex items-center justify-between px-3 py-2 rounded-lg border text-xs font-medium transition-colors ${
+                  isDark ? 'bg-[#11131C] border-[#2B3145] text-slate-200 hover:bg-[#1A1D2B]' : 'bg-white border-slate-300 text-slate-700 hover:bg-slate-100'
+                }`}
+              >
+                <span className="flex items-center gap-1.5 font-mono text-[11px]">
+                  <span>curl :5173/api/schema</span>
+                </span>
+                {copiedSchema ? <span className="text-emerald-500 flex items-center gap-1 font-sans text-xs">Copied!</span> : <span className="text-blue-500 font-sans text-xs">Copy Schema</span>}
+              </button>
+            </div>
+          </div>
+
+          {/* Terminal CLI Commands */}
+          <div className={`p-4 rounded-xl border space-y-2.5 ${
+            isDark ? 'bg-[#181B26] border-[#282D3D]' : 'bg-slate-50 border-slate-200'
+          }`}>
+            <h3 className="font-bold text-xs flex items-center gap-1.5">
+              <Terminal className="w-3.5 h-3.5 text-emerald-500" />
+              4. Terminal CLI Control
+            </h3>
+            <div className="space-y-1.5 text-[11px] font-mono">
+              <div className="p-2 rounded bg-black/10 dark:bg-black/30 flex justify-between items-center">
+                <span>inkflow stop <span className="font-sans text-[10px] text-slate-400">(or inkflow-stop)</span></span>
+                <span className="text-[10px] font-sans text-amber-500 font-semibold">Stop server</span>
+              </div>
+              <div className="p-2 rounded bg-black/10 dark:bg-black/30 flex justify-between items-center">
+                <span>inkflow start</span>
+                <span className="text-[10px] font-sans text-emerald-500 font-semibold">Start & Chrome</span>
+              </div>
+              <div className="p-2 rounded bg-black/10 dark:bg-black/30 flex justify-between items-center">
+                <span>inkflow status</span>
+                <span className="text-[10px] font-sans text-blue-500 font-semibold">Check port</span>
+              </div>
+              <div className="p-2 rounded bg-black/10 dark:bg-black/30 flex justify-between items-center">
+                <span>inkflow schema | prompt</span>
+                <span className="text-[10px] font-sans text-purple-400 font-semibold">AI specs</span>
+              </div>
+            </div>
           </div>
 
           {/* Direct Local AI Port Connector */}
