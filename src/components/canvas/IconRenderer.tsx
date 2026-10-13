@@ -13,10 +13,13 @@ interface IconRendererProps {
   theme?: 'light' | 'dark';
   fontSize?: number;
   isEditing?: boolean;
+  editingField?: 'title' | 'subtitle';
   editingText?: string;
   onEditingTextChange?: (text: string) => void;
   onSaveTextEdit?: () => void;
   onCancelTextEdit?: () => void;
+  onStartEditSubtitle?: () => void;
+  onStartEditTitle?: () => void;
 }
 
 export const IconRenderer: React.FC<IconRendererProps> = ({
@@ -30,10 +33,13 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
   theme = 'light',
   fontSize,
   isEditing = false,
+  editingField = 'title',
   editingText,
   onEditingTextChange,
   onSaveTextEdit,
   onCancelTextEdit,
+  onStartEditSubtitle,
+  onStartEditTitle,
 }) => {
   const [imgError, setImgError] = useState(false);
   const isDark = theme === 'dark';
@@ -131,7 +137,7 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
   if (isWideCard) {
     return (
       <div
-        className="w-full h-full flex flex-row items-center gap-2.5 px-3 py-2 rounded-xl select-none transition-shadow overflow-hidden"
+        className="w-full h-full max-w-full max-h-full box-border flex flex-row items-center gap-2.5 px-3 py-2 rounded-xl select-none transition-shadow overflow-hidden"
         style={{
           backgroundColor: bg,
           border: `1.5px solid ${strokeColor}`,
@@ -142,8 +148,8 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
       >
         {iconGraphic}
 
-        <div className="flex-1 min-w-0 flex flex-col justify-center text-left">
-          {isEditing ? (
+        <div className="flex-1 min-w-0 max-w-full overflow-hidden flex flex-col justify-center text-left">
+          {isEditing && editingField === 'title' ? (
             <input
               type="text"
               value={editingText ?? ''}
@@ -158,7 +164,7 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
                 }
               }}
               autoFocus
-              className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold text-[11.5px] leading-snug tracking-tight p-0 m-0 w-full"
+              className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold text-[11.5px] leading-snug tracking-tight p-0 m-0 w-full min-w-0 max-w-full box-border"
               style={{
                 color: titleColor,
                 fontSize: `${fontSize || 12}px`,
@@ -168,27 +174,58 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
             />
           ) : (
             <div
-              className="font-semibold truncate text-[11.5px] leading-snug tracking-tight"
+              className="font-semibold truncate text-[11.5px] leading-snug tracking-tight cursor-text select-text hover:opacity-95"
               style={{
                 color: titleColor,
                 fontSize: `${fontSize || 12}px`,
               }}
               title={label || iconDef.name}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                onStartEditTitle?.();
+              }}
             >
               {label || iconDef.name}
             </div>
           )}
 
-          {subtitle && (
-            <div
-              className="line-clamp-2 text-[10px] leading-tight opacity-85 mt-0.5 whitespace-pre-line"
+          {isEditing && editingField === 'subtitle' ? (
+            <textarea
+              value={editingText ?? ''}
+              onChange={(e) => onEditingTextChange?.(e.target.value)}
+              onBlur={onSaveTextEdit}
+              rows={2}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  onSaveTextEdit?.();
+                } else if (e.key === 'Escape') {
+                  onCancelTextEdit?.();
+                }
+              }}
+              autoFocus
+              className="bg-transparent border-b border-dashed border-blue-400 outline-none text-[10px] leading-tight p-0 m-0 mt-0.5 w-full min-w-0 max-w-full box-border resize-none"
               style={{
                 color: subColor,
                 fontSize: `${Math.max(9, Math.round((fontSize || 12) * 0.78))}px`,
               }}
-              title={subtitle}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <div
+              className="line-clamp-2 text-[10px] leading-tight opacity-85 mt-0.5 whitespace-pre-line cursor-text select-text hover:opacity-100 transition-opacity"
+              style={{
+                color: subColor,
+                fontSize: `${Math.max(9, Math.round((fontSize || 12) * 0.78))}px`,
+              }}
+              title={subtitle || 'Double-click to edit description'}
+              onDoubleClick={(e) => {
+                e.stopPropagation();
+                onStartEditSubtitle?.();
+              }}
             >
-              {subtitle}
+              {subtitle || (isEditing ? <span className="opacity-40 italic">Add description...</span> : '')}
             </div>
           )}
         </div>
@@ -198,7 +235,7 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
 
   return (
     <div
-      className="w-full h-full flex flex-col items-center justify-center p-2 rounded-xl select-none transition-shadow"
+      className="w-full h-full max-w-full max-h-full box-border flex flex-col items-center justify-center p-2 rounded-xl select-none transition-shadow overflow-hidden"
       style={{
         backgroundColor: bg,
         border: `1.5px solid ${strokeColor}`,
@@ -210,7 +247,7 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
       {iconGraphic}
 
       {/* Clean Title Below the Icon */}
-      {isEditing ? (
+      {isEditing && editingField === 'title' ? (
         <input
           type="text"
           value={editingText ?? ''}
@@ -225,7 +262,7 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
             }
           }}
           autoFocus
-          className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold text-center max-w-full mt-1.5 leading-tight px-1 tracking-tight p-0 m-0 w-full"
+          className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold text-center max-w-full mt-1.5 leading-tight px-1 tracking-tight p-0 m-0 w-full min-w-0 box-border"
           style={{
             color: titleColor,
             fontSize: `${fontSize || 12}px`,
@@ -235,26 +272,59 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
         />
       ) : (
         <div
-          className="font-semibold text-center truncate max-w-full mt-1.5 leading-tight px-1 tracking-tight"
+          className="font-semibold text-center truncate max-w-full mt-1.5 leading-tight px-1 tracking-tight cursor-text select-text hover:opacity-95"
           style={{
             color: titleColor,
             fontSize: `${fontSize || 12}px`,
           }}
           title={label || iconDef.name}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            onStartEditTitle?.();
+          }}
         >
           {label || iconDef.name}
         </div>
       )}
 
-      {subtitle && (
-        <div
-          className="text-center truncate max-w-full opacity-80 mt-0.5"
+      {/* Subtitle Below Title */}
+      {isEditing && editingField === 'subtitle' ? (
+        <input
+          type="text"
+          value={editingText ?? ''}
+          onChange={(e) => onEditingTextChange?.(e.target.value)}
+          onBlur={onSaveTextEdit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              onSaveTextEdit?.();
+            } else if (e.key === 'Escape') {
+              onCancelTextEdit?.();
+            }
+          }}
+          autoFocus
+          className="bg-transparent border-b border-dashed border-blue-400 outline-none text-center max-w-full mt-0.5 leading-tight px-1 p-0 m-0 w-full min-w-0 box-border text-[10px]"
           style={{
             color: subColor,
             fontSize: `${Math.max(8.5, Math.round((fontSize || 12) * 0.75))}px`,
           }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        />
+      ) : (
+        <div
+          className="text-center truncate max-w-full opacity-80 mt-0.5 cursor-text select-text hover:opacity-100 transition-opacity"
+          style={{
+            color: subColor,
+            fontSize: `${Math.max(8.5, Math.round((fontSize || 12) * 0.75))}px`,
+          }}
+          title={subtitle || 'Double-click to edit description'}
+          onDoubleClick={(e) => {
+            e.stopPropagation();
+            onStartEditSubtitle?.();
+          }}
         >
-          {subtitle}
+          {subtitle || (isEditing ? <span className="opacity-40 italic text-[9px]">Add note...</span> : '')}
         </div>
       )}
     </div>

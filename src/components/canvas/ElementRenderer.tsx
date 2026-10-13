@@ -9,10 +9,13 @@ interface ElementRendererProps {
   isConnectorToolActive?: boolean;
   theme?: 'light' | 'dark';
   isEditing?: boolean;
+  editingField?: 'title' | 'subtitle';
   editingText?: string;
   onEditingTextChange?: (text: string) => void;
   onSaveTextEdit?: () => void;
   onCancelTextEdit?: () => void;
+  onStartEditSubtitle?: () => void;
+  onStartEditTitle?: () => void;
   onSelect: (e: React.MouseEvent) => void;
   onStartResize: (e: React.MouseEvent, handle: string) => void;
   onStartAnchorConnect: (e: React.MouseEvent, anchor: AnchorPosition) => void;
@@ -54,10 +57,13 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   isConnectorToolActive = false,
   theme = 'light',
   isEditing = false,
+  editingField = 'title',
   editingText,
   onEditingTextChange,
   onSaveTextEdit,
   onCancelTextEdit,
+  onStartEditSubtitle,
+  onStartEditTitle,
   onSelect,
   onStartResize,
   onStartAnchorConnect,
@@ -91,10 +97,13 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
             theme={theme}
             fontSize={style.fontSize}
             isEditing={isEditing}
+            editingField={editingField}
             editingText={editingText}
             onEditingTextChange={onEditingTextChange}
             onSaveTextEdit={onSaveTextEdit}
             onCancelTextEdit={onCancelTextEdit}
+            onStartEditSubtitle={onStartEditSubtitle}
+            onStartEditTitle={onStartEditTitle}
           />
         );
 
@@ -228,7 +237,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       case 'text':
         return (
           <div
-            className={`w-full h-full flex items-center justify-center p-2 break-words text-center ${
+            className={`w-full h-full max-w-full max-h-full overflow-hidden box-border flex items-center justify-center p-2 break-words text-center ${
               isSelected && !isEditing ? 'border border-dashed border-neutral-400 dark:border-neutral-500 rounded-md' : ''
             }`}
           >
@@ -246,7 +255,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
                   }
                 }}
                 autoFocus
-                className="w-full h-full bg-transparent border border-dashed border-blue-400 rounded p-1 resize-none focus:outline-none"
+                className="w-full h-full min-w-0 max-w-full box-border bg-transparent border border-dashed border-blue-400 rounded p-1 resize-none focus:outline-none"
                 style={{
                   color: isDark && isBlueColor(style.textColor) ? '#E5E5E5' : (style.textColor || (isDark ? '#F1F5F9' : '#0F172A')),
                   fontSize: `${style.fontSize || 16}px`,
@@ -297,14 +306,14 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
 
         return (
           <div
-            className="w-full h-full rounded-full flex flex-col items-center justify-center p-3 text-center"
+            className="w-full h-full max-w-full max-h-full rounded-full flex flex-col items-center justify-center p-3 text-center overflow-hidden box-border"
             style={{
               backgroundColor: circleBg,
               border: `1.5px solid ${cleanStroke}`,
               boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.05)',
             }}
           >
-            {isEditing ? (
+            {isEditing && editingField === 'title' ? (
               <input
                 type="text"
                 value={editingText ?? ''}
@@ -319,7 +328,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
                   }
                 }}
                 autoFocus
-                className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold text-center max-w-[90%] p-0 m-0 w-full"
+                className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold text-center max-w-[90%] p-0 m-0 w-full min-w-0 box-border"
                 style={{
                   color: circleTitleCol,
                   fontSize: `${style.fontSize || 14}px`,
@@ -329,7 +338,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
               />
             ) : (
               <div
-                className="font-semibold truncate max-w-[90%]"
+                className="font-semibold truncate max-w-[90%] cursor-text select-text hover:opacity-95"
                 style={{
                   color: circleTitleCol,
                   fontSize: `${style.fontSize || 14}px`,
@@ -341,19 +350,51 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
                       : undefined,
                   textAlign: style.textAlign || 'center',
                 }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  onStartEditTitle?.();
+                }}
               >
                 {text}
               </div>
             )}
-            {subtitle && (
-              <div
-                className="opacity-75 mt-0.5 truncate max-w-[85%]"
+            {isEditing && editingField === 'subtitle' ? (
+              <input
+                type="text"
+                value={editingText ?? ''}
+                onChange={(e) => onEditingTextChange?.(e.target.value)}
+                onBlur={onSaveTextEdit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    onSaveTextEdit?.();
+                  } else if (e.key === 'Escape') {
+                    onCancelTextEdit?.();
+                  }
+                }}
+                autoFocus
+                className="bg-transparent border-b border-dashed border-blue-400 outline-none text-center max-w-[85%] mt-0.5 p-0 m-0 w-full min-w-0 box-border text-[10px]"
                 style={{
                   color: circleSubCol,
                   fontSize: `${Math.max(8.5, Math.round((style.fontSize || 14) * 0.75))}px`,
                 }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div
+                className="opacity-75 mt-0.5 truncate max-w-[85%] cursor-text select-text hover:opacity-100 transition-opacity"
+                style={{
+                  color: circleSubCol,
+                  fontSize: `${Math.max(8.5, Math.round((style.fontSize || 14) * 0.75))}px`,
+                }}
+                title={subtitle || 'Double-click to edit description'}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  onStartEditSubtitle?.();
+                }}
               >
-                {subtitle}
+                {subtitle || (isEditing ? <span className="opacity-40 italic text-[9px]">Add note...</span> : '')}
               </div>
             )}
           </div>
@@ -440,7 +481,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
         const cylSubColor = isDark ? '#94A3B8' : '#64748B';
         return (
           <div
-            className="w-full h-full rounded-lg relative flex flex-col justify-between p-2.5 overflow-hidden"
+            className="w-full h-full max-w-full max-h-full rounded-lg relative flex flex-col justify-between p-2.5 overflow-hidden box-border"
             style={{
               backgroundColor: cylBg,
               border: `1.5px solid ${cleanStroke}`,
@@ -451,13 +492,13 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
               className="absolute top-0 left-0 right-0 h-2 opacity-25"
               style={{ backgroundColor: cleanStroke }}
             />
-            <div className="flex items-center gap-1.5 mt-0.5">
+            <div className="flex items-center gap-1.5 mt-0.5 min-w-0 max-w-full overflow-hidden">
               <svg viewBox="0 0 24 24" className="w-4 h-4 fill-none shrink-0" style={{ color: cleanStroke }}>
                 <ellipse cx="12" cy="6" rx="8" ry="3" stroke="currentColor" strokeWidth="2" />
                 <path d="M4 6v12c0 1.66 3.58 3 8 3s8-1.34 8-3V6" stroke="currentColor" strokeWidth="2" />
                 <path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3" stroke="currentColor" strokeWidth="2" />
               </svg>
-              {isEditing ? (
+              {isEditing && editingField === 'title' ? (
                 <input
                   type="text"
                   value={editingText ?? ''}
@@ -472,7 +513,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
                     }
                   }}
                   autoFocus
-                  className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold truncate p-0 m-0 w-full"
+                  className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold truncate p-0 m-0 w-full min-w-0 max-w-full box-border"
                   style={{
                     color: cylTitleColor,
                     fontSize: `${style.fontSize || 14}px`,
@@ -482,7 +523,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
                 />
               ) : (
                 <div
-                  className="font-semibold truncate"
+                  className="font-semibold truncate cursor-text select-text hover:opacity-95"
                   style={{
                     color: cylTitleColor,
                     fontSize: `${style.fontSize || 14}px`,
@@ -493,20 +534,52 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
                         ? "'Caveat', cursive"
                         : undefined,
                   }}
+                  onDoubleClick={(e) => {
+                    e.stopPropagation();
+                    onStartEditTitle?.();
+                  }}
                 >
                   {text || 'Database'}
                 </div>
               )}
             </div>
-            {subtitle && (
-              <div
-                className="leading-tight mt-1 whitespace-pre-line"
+            {isEditing && editingField === 'subtitle' ? (
+              <textarea
+                value={editingText ?? ''}
+                onChange={(e) => onEditingTextChange?.(e.target.value)}
+                onBlur={onSaveTextEdit}
+                rows={2}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    onSaveTextEdit?.();
+                  } else if (e.key === 'Escape') {
+                    onCancelTextEdit?.();
+                  }
+                }}
+                autoFocus
+                className="bg-transparent border-b border-dashed border-blue-400 outline-none leading-tight mt-1 p-0 m-0 w-full min-w-0 max-w-full box-border resize-none"
                 style={{
                   color: cylSubColor,
                   fontSize: `${Math.max(8.5, Math.round((style.fontSize || 14) * 0.75))}px`,
                 }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div
+                className="leading-tight mt-1 whitespace-pre-line cursor-text select-text hover:opacity-100 transition-opacity"
+                style={{
+                  color: cylSubColor,
+                  fontSize: `${Math.max(8.5, Math.round((style.fontSize || 14) * 0.75))}px`,
+                }}
+                title={subtitle || 'Double click to edit description'}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  onStartEditSubtitle?.();
+                }}
               >
-                {subtitle}
+                {subtitle || (isEditing ? <span className="opacity-40 italic text-[10px]">Add description...</span> : '')}
               </div>
             )}
           </div>
@@ -531,7 +604,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
 
         return (
           <div
-            className="w-full h-full rounded-lg flex flex-col justify-between p-2.5"
+            className="w-full h-full max-w-full max-h-full rounded-lg flex flex-col justify-between p-2.5 overflow-hidden box-border"
             style={{
               backgroundColor: defaultCardBg,
               border: `1.5px solid ${cleanStroke}`,
@@ -541,7 +614,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
             {/* Tier tag if present */}
             {tierTag && (
               <div
-                className="text-[9px] font-mono uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded w-fit mb-1"
+                className="text-[9px] font-mono uppercase tracking-wider font-semibold px-1.5 py-0.5 rounded w-fit mb-1 shrink-0"
                 style={{
                   backgroundColor: `${cleanStroke}18`,
                   color: cleanStroke,
@@ -551,7 +624,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
               </div>
             )}
 
-            {isEditing ? (
+            {isEditing && editingField === 'title' ? (
               <textarea
                 value={editingText ?? ''}
                 onChange={(e) => onEditingTextChange?.(e.target.value)}
@@ -565,7 +638,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
                   }
                 }}
                 autoFocus
-                className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold leading-snug p-0 m-0 w-full resize-none"
+                className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold leading-snug p-0 m-0 w-full min-w-0 max-w-full box-border resize-none"
                 style={{
                   color: defaultTitleCol,
                   fontSize: `${style.fontSize || 14}px`,
@@ -582,7 +655,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
               />
             ) : (
               <div
-                className="font-semibold leading-snug"
+                className="font-semibold leading-snug truncate cursor-text select-text hover:opacity-95"
                 style={{
                   color: defaultTitleCol,
                   fontSize: `${style.fontSize || 14}px`,
@@ -594,20 +667,52 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
                       : undefined,
                   textAlign: style.textAlign || 'left',
                 }}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  onStartEditTitle?.();
+                }}
               >
                 {text}
               </div>
             )}
 
-            {subtitle && (
-              <div
-                className="line-clamp-3 leading-tight mt-1 whitespace-pre-line"
+            {isEditing && editingField === 'subtitle' ? (
+              <textarea
+                value={editingText ?? ''}
+                onChange={(e) => onEditingTextChange?.(e.target.value)}
+                onBlur={onSaveTextEdit}
+                rows={2}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    onSaveTextEdit?.();
+                  } else if (e.key === 'Escape') {
+                    onCancelTextEdit?.();
+                  }
+                }}
+                autoFocus
+                className="bg-transparent border-b border-dashed border-blue-400 outline-none leading-tight mt-1 p-0 m-0 w-full min-w-0 max-w-full box-border resize-none"
                 style={{
                   color: defaultSubCol,
                   fontSize: `${Math.max(8.5, Math.round((style.fontSize || 14) * 0.75))}px`,
                 }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div
+                className="line-clamp-3 leading-tight mt-1 whitespace-pre-line cursor-text select-text hover:opacity-100 transition-opacity"
+                style={{
+                  color: defaultSubCol,
+                  fontSize: `${Math.max(8.5, Math.round((style.fontSize || 14) * 0.75))}px`,
+                }}
+                title={subtitle || 'Double click to edit description'}
+                onDoubleClick={(e) => {
+                  e.stopPropagation();
+                  onStartEditSubtitle?.();
+                }}
               >
-                {subtitle}
+                {subtitle || (isEditing ? <span className="opacity-40 italic text-[10px]">Add description...</span> : '')}
               </div>
             )}
           </div>
@@ -634,7 +739,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       {renderShapeBody()}
 
       {/* Magnetic Anchor Points: Only show when arrow tool is near this specific block, or when selected */}
-      {((isHovered && isConnectorToolActive) || isSelected) && type !== 'frame' && (
+      {((isHovered && isConnectorToolActive) || isSelected) && !isEditing && type !== 'frame' && (
         <>
           {/* Top Anchor */}
           <div
@@ -729,7 +834,7 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
       )}
 
       {/* Resize Handles (8 points) when Selected */}
-      {isSelected && (
+      {isSelected && !isEditing && (
         <>
           <div
             className={`absolute -top-1.5 -left-1.5 w-2.5 h-2.5 rounded-xs cursor-nwse-resize z-50 shadow-xs border ${

@@ -85,8 +85,9 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   const [drawingCurrent, setDrawingCurrent] = useState<Point>({ x: 0, y: 0 });
   const [penPoints, setPenPoints] = useState<Point[]>([]);
 
-  // Text inline editing inside element
+  // Text inline editing inside element (title or subtitle)
   const [editingElementId, setEditingElementId] = useState<string | null>(null);
+  const [editingField, setEditingField] = useState<'title' | 'subtitle'>('title');
   const [editingText, setEditingText] = useState('');
 
   // Track hover
@@ -401,6 +402,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     if (resizingHandle && resizingElement) {
       const dx = worldPoint.x - resizeStartMouse.x;
       const dy = worldPoint.y - resizeStartMouse.y;
+      if (Math.abs(dx) < 2 && Math.abs(dy) < 2) return;
       let newW = resizingElement.width;
       let newH = resizingElement.height;
       let newX = resizingElement.x;
@@ -970,10 +972,15 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     setResizeStartMouse(screenToWorld(e.clientX, e.clientY));
   };
 
-  // Double click to edit text
-  const handleDoubleClickElement = (element: CanvasElement) => {
+  // Double click to edit text (title or subtitle)
+  const handleDoubleClickElement = (element: CanvasElement, field: 'title' | 'subtitle' = 'title') => {
     setEditingElementId(element.id);
-    setEditingText(element.text || element.connectorLabel || element.iconLabel || element.frameTitle || '');
+    setEditingField(field);
+    if (field === 'subtitle') {
+      setEditingText(element.subtitle || '');
+    } else {
+      setEditingText(element.text || element.connectorLabel || element.iconLabel || element.frameTitle || '');
+    }
   };
 
   const handleSaveTextEdit = () => {
@@ -981,6 +988,9 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
     onElementsChange(
       elements.map((el) => {
         if (el.id === editingElementId) {
+          if (editingField === 'subtitle') {
+            return { ...el, subtitle: editingText };
+          }
           if (el.type === 'connector') return { ...el, connectorLabel: editingText };
           if (el.type === 'frame') return { ...el, frameTitle: editingText };
           if (el.type === 'icon') return { ...el, iconLabel: editingText, text: editingText };
@@ -991,6 +1001,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
       true
     );
     setEditingElementId(null);
+    setEditingField('title');
   };
 
   // Connectors, Pens & Shapes split
@@ -1230,10 +1241,13 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
             theme={theme}
             isConnectorToolActive={activeTool === 'connector'}
             isEditing={editingElementId === el.id}
+            editingField={editingField}
             editingText={editingText}
             onEditingTextChange={setEditingText}
             onSaveTextEdit={handleSaveTextEdit}
             onCancelTextEdit={() => setEditingElementId(null)}
+            onStartEditSubtitle={() => handleDoubleClickElement(el, 'subtitle')}
+            onStartEditTitle={() => handleDoubleClickElement(el, 'title')}
             onSelect={(e) => handleElementMouseDown(e, el)}
             onStartResize={(e, handle) => handleStartResize(e, el, handle)}
             onStartAnchorConnect={(e, anchor) => {
@@ -1245,7 +1259,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
             }}
             onDoubleClick={(e) => {
               e.stopPropagation();
-              handleDoubleClickElement(el);
+              handleDoubleClickElement(el, 'title');
             }}
           />
         ))}
