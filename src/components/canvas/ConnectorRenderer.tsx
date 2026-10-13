@@ -7,6 +7,11 @@ interface ConnectorRendererProps {
   allElements: CanvasElement[];
   isSelected: boolean;
   theme?: 'dark' | 'light';
+  isEditing?: boolean;
+  editingText?: string;
+  onEditingTextChange?: (text: string) => void;
+  onSaveTextEdit?: () => void;
+  onCancelTextEdit?: () => void;
   onSelect: (e: React.MouseEvent) => void;
   onLabelDoubleClick: (e: React.MouseEvent) => void;
   onStartBendDrag?: (e: React.MouseEvent, connector: CanvasElement) => void;
@@ -17,6 +22,11 @@ export const ConnectorRenderer: React.FC<ConnectorRendererProps> = ({
   allElements,
   isSelected,
   theme = 'dark',
+  isEditing = false,
+  editingText,
+  onEditingTextChange,
+  onSaveTextEdit,
+  onCancelTextEdit,
   onSelect,
   onLabelDoubleClick,
   onStartBendDrag,
@@ -90,7 +100,8 @@ export const ConnectorRenderer: React.FC<ConnectorRendererProps> = ({
   const isLight = theme === 'light';
   const pillFill = isLight ? '#FFFFFF' : '#181818';
   const labelTextColor = isLight ? '#0F172A' : '#F8FAFC';
-  const pillWidth = Math.max(36, connectorLabel ? connectorLabel.length * 6.8 + 18 : 36);
+  const currentLabel = isEditing ? (editingText ?? '') : (connectorLabel ?? '');
+  const pillWidth = Math.max(48, currentLabel ? currentLabel.length * 7 + 22 : 48);
 
   return (
     <g className="cursor-pointer group" onClick={onSelect}>
@@ -149,7 +160,7 @@ export const ConnectorRenderer: React.FC<ConnectorRendererProps> = ({
       )}
 
       {/* Label */}
-      {connectorLabel && (
+      {(connectorLabel || isEditing) && (
         <g
           transform={`translate(${midPoint.x}, ${midPoint.y})`}
           onDoubleClick={onLabelDoubleClick}
@@ -167,19 +178,48 @@ export const ConnectorRenderer: React.FC<ConnectorRendererProps> = ({
             strokeWidth={1.2}
             className="filter drop-shadow-sm"
           />
-          {/* Text */}
-          <text
-            x={0}
-            y={3.5}
-            textAnchor="middle"
-            fill={labelTextColor}
-            fontSize={style.fontSize || 10.5}
-            fontWeight={600}
-            fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
-            className="select-none pointer-events-none"
-          >
-            {connectorLabel}
-          </text>
+          {/* Text or Input */}
+          {isEditing ? (
+            <foreignObject
+              x={-pillWidth / 2}
+              y={-11}
+              width={pillWidth}
+              height={22}
+            >
+              <input
+                type="text"
+                value={editingText ?? ''}
+                onChange={(e) => onEditingTextChange?.(e.target.value)}
+                onBlur={onSaveTextEdit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    onSaveTextEdit?.();
+                  } else if (e.key === 'Escape') {
+                    onCancelTextEdit?.();
+                  }
+                }}
+                autoFocus
+                className="w-full h-full text-center bg-transparent border-none outline-none p-0 m-0 font-mono text-[10.5px] font-semibold"
+                style={{ color: labelTextColor }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            </foreignObject>
+          ) : (
+            <text
+              x={0}
+              y={3.5}
+              textAnchor="middle"
+              fill={labelTextColor}
+              fontSize={style.fontSize || 10.5}
+              fontWeight={600}
+              fontFamily="ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace"
+              className="select-none pointer-events-none"
+            >
+              {connectorLabel}
+            </text>
+          )}
         </g>
       )}
     </g>

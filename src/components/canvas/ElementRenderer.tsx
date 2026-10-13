@@ -8,6 +8,11 @@ interface ElementRendererProps {
   isHovered: boolean;
   isConnectorToolActive?: boolean;
   theme?: 'light' | 'dark';
+  isEditing?: boolean;
+  editingText?: string;
+  onEditingTextChange?: (text: string) => void;
+  onSaveTextEdit?: () => void;
+  onCancelTextEdit?: () => void;
   onSelect: (e: React.MouseEvent) => void;
   onStartResize: (e: React.MouseEvent, handle: string) => void;
   onStartAnchorConnect: (e: React.MouseEvent, anchor: AnchorPosition) => void;
@@ -48,6 +53,11 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
   isHovered,
   isConnectorToolActive = false,
   theme = 'light',
+  isEditing = false,
+  editingText,
+  onEditingTextChange,
+  onSaveTextEdit,
+  onCancelTextEdit,
   onSelect,
   onStartResize,
   onStartAnchorConnect,
@@ -80,6 +90,11 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
             isRough={style.roughness > 0}
             theme={theme}
             fontSize={style.fontSize}
+            isEditing={isEditing}
+            editingText={editingText}
+            onEditingTextChange={onEditingTextChange}
+            onSaveTextEdit={onSaveTextEdit}
+            onCancelTextEdit={onCancelTextEdit}
           />
         );
 
@@ -104,9 +119,31 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
               fontSize: `${style.fontSize || 15}px`,
             }}
           >
-            <div className="whitespace-pre-wrap break-words leading-tight">
-              {text || 'Double click to type note...'}
-            </div>
+            {isEditing ? (
+              <textarea
+                value={editingText ?? ''}
+                onChange={(e) => onEditingTextChange?.(e.target.value)}
+                onBlur={onSaveTextEdit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Escape') {
+                    onCancelTextEdit?.();
+                  }
+                }}
+                autoFocus
+                className="w-full h-full bg-transparent border-none outline-none resize-none p-0 leading-tight"
+                style={{
+                  color: col.text,
+                  fontFamily: style.fontFamily === 'hand' ? "'Caveat', cursive" : undefined,
+                  fontSize: `${style.fontSize || 15}px`,
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div className="whitespace-pre-wrap break-words leading-tight">
+                {text || 'Double click to type note...'}
+              </div>
+            )}
             <div
               className="absolute bottom-0 right-0 w-3.5 h-3.5 bg-black/10"
               style={{ clipPath: 'polygon(100% 0, 0 100%, 100% 100%)' }}
@@ -145,9 +182,9 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
             }}
           >
             {/* Eraser Tag Badge */}
-            {element.frameTitle && (
+            {(element.frameTitle || isEditing) && (
               <div
-                className="absolute top-2 left-3 px-2.5 py-0.5 rounded-md text-[11px] font-mono tracking-tight font-semibold flex items-center gap-1.5"
+                className="absolute top-2 left-3 px-2.5 py-0.5 rounded-md text-[11px] font-mono tracking-tight font-semibold flex items-center gap-1.5 pointer-events-auto"
                 style={{
                   backgroundColor: isDark ? '#1C1C1E' : '#FFFFFF',
                   color: isOuterDiagram
@@ -160,7 +197,29 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
                 }}
               >
                 {isOuterDiagram && <span className="opacity-60 text-xs">⸤L</span>}
-                <span>{element.frameTitle}</span>
+                {isEditing ? (
+                  <input
+                    type="text"
+                    value={editingText ?? ''}
+                    onChange={(e) => onEditingTextChange?.(e.target.value)}
+                    onBlur={onSaveTextEdit}
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        e.preventDefault();
+                        onSaveTextEdit?.();
+                      } else if (e.key === 'Escape') {
+                        onCancelTextEdit?.();
+                      }
+                    }}
+                    autoFocus
+                    className="bg-transparent border-none outline-none font-mono text-[11px] font-semibold tracking-tight p-0 m-0 min-w-[80px]"
+                    style={{ color: 'inherit' }}
+                    onClick={(e) => e.stopPropagation()}
+                    onMouseDown={(e) => e.stopPropagation()}
+                  />
+                ) : (
+                  <span>{element.frameTitle}</span>
+                )}
               </div>
             )}
           </div>
@@ -170,24 +229,58 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
         return (
           <div
             className={`w-full h-full flex items-center justify-center p-2 break-words text-center ${
-              isSelected ? 'border border-dashed border-neutral-400 dark:border-neutral-500 rounded-md' : ''
+              isSelected && !isEditing ? 'border border-dashed border-neutral-400 dark:border-neutral-500 rounded-md' : ''
             }`}
-            style={{
-              color: isDark && isBlueColor(style.textColor) ? '#E5E5E5' : (style.textColor || (isDark ? '#F1F5F9' : '#0F172A')),
-              fontSize: `${style.fontSize || 16}px`,
-              fontFamily:
-                style.fontFamily === 'mono'
-                  ? "'JetBrains Mono', monospace"
-                  : style.fontFamily === 'hand'
-                  ? "'Caveat', cursive"
-                  : 'inherit',
-              textAlign: style.textAlign || 'center',
-            }}
           >
-            {text || (isSelected ? <span className="opacity-40 italic">Type here...</span> : '')}
+            {isEditing ? (
+              <textarea
+                value={editingText ?? ''}
+                onChange={(e) => onEditingTextChange?.(e.target.value)}
+                onBlur={onSaveTextEdit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    onSaveTextEdit?.();
+                  } else if (e.key === 'Escape') {
+                    onCancelTextEdit?.();
+                  }
+                }}
+                autoFocus
+                className="w-full h-full bg-transparent border border-dashed border-blue-400 rounded p-1 resize-none focus:outline-none"
+                style={{
+                  color: isDark && isBlueColor(style.textColor) ? '#E5E5E5' : (style.textColor || (isDark ? '#F1F5F9' : '#0F172A')),
+                  fontSize: `${style.fontSize || 16}px`,
+                  fontFamily:
+                    style.fontFamily === 'mono'
+                      ? "'JetBrains Mono', monospace"
+                      : style.fontFamily === 'hand'
+                      ? "'Caveat', cursive"
+                      : 'inherit',
+                  textAlign: style.textAlign || 'center',
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div
+                className="w-full h-full flex items-center justify-center"
+                style={{
+                  color: isDark && isBlueColor(style.textColor) ? '#E5E5E5' : (style.textColor || (isDark ? '#F1F5F9' : '#0F172A')),
+                  fontSize: `${style.fontSize || 16}px`,
+                  fontFamily:
+                    style.fontFamily === 'mono'
+                      ? "'JetBrains Mono', monospace"
+                      : style.fontFamily === 'hand'
+                      ? "'Caveat', cursive"
+                      : 'inherit',
+                  textAlign: style.textAlign || 'center',
+                }}
+              >
+                {text || (isSelected ? <span className="opacity-40 italic">Type here...</span> : '')}
+              </div>
+            )}
           </div>
         );
-
       case 'circle':
         const isDefaultCircleBg =
           !style.fillColor ||
@@ -211,22 +304,47 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
               boxShadow: isDark ? '0 4px 12px rgba(0,0,0,0.4)' : '0 1px 3px rgba(0,0,0,0.05)',
             }}
           >
-            <div
-              className="font-semibold truncate max-w-[90%]"
-              style={{
-                color: circleTitleCol,
-                fontSize: `${style.fontSize || 14}px`,
-                fontFamily:
-                  style.fontFamily === 'mono'
-                    ? "'JetBrains Mono', monospace"
-                    : style.fontFamily === 'hand'
-                    ? "'Caveat', cursive"
-                    : undefined,
-                textAlign: style.textAlign || 'center',
-              }}
-            >
-              {text}
-            </div>
+            {isEditing ? (
+              <input
+                type="text"
+                value={editingText ?? ''}
+                onChange={(e) => onEditingTextChange?.(e.target.value)}
+                onBlur={onSaveTextEdit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    onSaveTextEdit?.();
+                  } else if (e.key === 'Escape') {
+                    onCancelTextEdit?.();
+                  }
+                }}
+                autoFocus
+                className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold text-center max-w-[90%] p-0 m-0 w-full"
+                style={{
+                  color: circleTitleCol,
+                  fontSize: `${style.fontSize || 14}px`,
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div
+                className="font-semibold truncate max-w-[90%]"
+                style={{
+                  color: circleTitleCol,
+                  fontSize: `${style.fontSize || 14}px`,
+                  fontFamily:
+                    style.fontFamily === 'mono'
+                      ? "'JetBrains Mono', monospace"
+                      : style.fontFamily === 'hand'
+                      ? "'Caveat', cursive"
+                      : undefined,
+                  textAlign: style.textAlign || 'center',
+                }}
+              >
+                {text}
+              </div>
+            )}
             {subtitle && (
               <div
                 className="opacity-75 mt-0.5 truncate max-w-[85%]"
@@ -266,22 +384,47 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
                 className={isDark ? 'drop-shadow-[0_4px_12px_rgba(0,0,0,0.4)]' : 'drop-shadow-[0_1px_3px_rgba(0,0,0,0.06)]'}
               />
             </svg>
-            <div
-              className="relative z-10 font-semibold max-w-[70%] pointer-events-none"
-              style={{
-                color: diamondTitleCol,
-                fontSize: `${style.fontSize || 14}px`,
-                fontFamily:
-                  style.fontFamily === 'mono'
-                    ? "'JetBrains Mono', monospace"
-                    : style.fontFamily === 'hand'
-                    ? "'Caveat', cursive"
-                    : undefined,
-                textAlign: style.textAlign || 'center',
-              }}
-            >
-              {text || 'Decision'}
-            </div>
+            {isEditing ? (
+              <input
+                type="text"
+                value={editingText ?? ''}
+                onChange={(e) => onEditingTextChange?.(e.target.value)}
+                onBlur={onSaveTextEdit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    e.preventDefault();
+                    onSaveTextEdit?.();
+                  } else if (e.key === 'Escape') {
+                    onCancelTextEdit?.();
+                  }
+                }}
+                autoFocus
+                className="relative z-10 bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold text-center max-w-[70%] p-0 m-0 w-full"
+                style={{
+                  color: diamondTitleCol,
+                  fontSize: `${style.fontSize || 14}px`,
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div
+                className="relative z-10 font-semibold max-w-[70%] pointer-events-none"
+                style={{
+                  color: diamondTitleCol,
+                  fontSize: `${style.fontSize || 14}px`,
+                  fontFamily:
+                    style.fontFamily === 'mono'
+                      ? "'JetBrains Mono', monospace"
+                      : style.fontFamily === 'hand'
+                      ? "'Caveat', cursive"
+                      : undefined,
+                  textAlign: style.textAlign || 'center',
+                }}
+              >
+                {text || 'Decision'}
+              </div>
+            )}
           </div>
         );
 
@@ -314,21 +457,46 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
                 <path d="M4 6v12c0 1.66 3.58 3 8 3s8-1.34 8-3V6" stroke="currentColor" strokeWidth="2" />
                 <path d="M4 12c0 1.66 3.58 3 8 3s8-1.34 8-3" stroke="currentColor" strokeWidth="2" />
               </svg>
-              <div
-                className="font-semibold truncate"
-                style={{
-                  color: cylTitleColor,
-                  fontSize: `${style.fontSize || 14}px`,
-                  fontFamily:
-                    style.fontFamily === 'mono'
-                      ? "'JetBrains Mono', monospace"
-                      : style.fontFamily === 'hand'
-                      ? "'Caveat', cursive"
-                      : undefined,
-                }}
-              >
-                {text || 'Database'}
-              </div>
+              {isEditing ? (
+                <input
+                  type="text"
+                  value={editingText ?? ''}
+                  onChange={(e) => onEditingTextChange?.(e.target.value)}
+                  onBlur={onSaveTextEdit}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter') {
+                      e.preventDefault();
+                      onSaveTextEdit?.();
+                    } else if (e.key === 'Escape') {
+                      onCancelTextEdit?.();
+                    }
+                  }}
+                  autoFocus
+                  className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold truncate p-0 m-0 w-full"
+                  style={{
+                    color: cylTitleColor,
+                    fontSize: `${style.fontSize || 14}px`,
+                  }}
+                  onClick={(e) => e.stopPropagation()}
+                  onMouseDown={(e) => e.stopPropagation()}
+                />
+              ) : (
+                <div
+                  className="font-semibold truncate"
+                  style={{
+                    color: cylTitleColor,
+                    fontSize: `${style.fontSize || 14}px`,
+                    fontFamily:
+                      style.fontFamily === 'mono'
+                        ? "'JetBrains Mono', monospace"
+                        : style.fontFamily === 'hand'
+                        ? "'Caveat', cursive"
+                        : undefined,
+                  }}
+                >
+                  {text || 'Database'}
+                </div>
+              )}
             </div>
             {subtitle && (
               <div
@@ -383,22 +551,53 @@ export const ElementRenderer: React.FC<ElementRendererProps> = ({
               </div>
             )}
 
-            <div
-              className="font-semibold leading-snug"
-              style={{
-                color: defaultTitleCol,
-                fontSize: `${style.fontSize || 14}px`,
-                fontFamily:
-                  style.fontFamily === 'mono'
-                    ? "'JetBrains Mono', monospace"
-                    : style.fontFamily === 'hand'
-                    ? "'Caveat', cursive"
-                    : undefined,
-                textAlign: style.textAlign || 'left',
-              }}
-            >
-              {text}
-            </div>
+            {isEditing ? (
+              <textarea
+                value={editingText ?? ''}
+                onChange={(e) => onEditingTextChange?.(e.target.value)}
+                onBlur={onSaveTextEdit}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    onSaveTextEdit?.();
+                  } else if (e.key === 'Escape') {
+                    onCancelTextEdit?.();
+                  }
+                }}
+                autoFocus
+                className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold leading-snug p-0 m-0 w-full resize-none"
+                style={{
+                  color: defaultTitleCol,
+                  fontSize: `${style.fontSize || 14}px`,
+                  fontFamily:
+                    style.fontFamily === 'mono'
+                      ? "'JetBrains Mono', monospace"
+                      : style.fontFamily === 'hand'
+                      ? "'Caveat', cursive"
+                      : undefined,
+                  textAlign: style.textAlign || 'left',
+                }}
+                onClick={(e) => e.stopPropagation()}
+                onMouseDown={(e) => e.stopPropagation()}
+              />
+            ) : (
+              <div
+                className="font-semibold leading-snug"
+                style={{
+                  color: defaultTitleCol,
+                  fontSize: `${style.fontSize || 14}px`,
+                  fontFamily:
+                    style.fontFamily === 'mono'
+                      ? "'JetBrains Mono', monospace"
+                      : style.fontFamily === 'hand'
+                      ? "'Caveat', cursive"
+                      : undefined,
+                  textAlign: style.textAlign || 'left',
+                }}
+              >
+                {text}
+              </div>
+            )}
 
             {subtitle && (
               <div

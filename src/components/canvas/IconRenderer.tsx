@@ -12,6 +12,11 @@ interface IconRendererProps {
   isRough?: boolean;
   theme?: 'light' | 'dark';
   fontSize?: number;
+  isEditing?: boolean;
+  editingText?: string;
+  onEditingTextChange?: (text: string) => void;
+  onSaveTextEdit?: () => void;
+  onCancelTextEdit?: () => void;
 }
 
 export const IconRenderer: React.FC<IconRendererProps> = ({
@@ -24,6 +29,11 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
   fillColor,
   theme = 'light',
   fontSize,
+  isEditing = false,
+  editingText,
+  onEditingTextChange,
+  onSaveTextEdit,
+  onCancelTextEdit,
 }) => {
   const [imgError, setImgError] = useState(false);
   const isDark = theme === 'dark';
@@ -133,16 +143,41 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
         {iconGraphic}
 
         <div className="flex-1 min-w-0 flex flex-col justify-center text-left">
-          <div
-            className="font-semibold truncate text-[11.5px] leading-snug tracking-tight"
-            style={{
-              color: titleColor,
-              fontSize: `${fontSize || 12}px`,
-            }}
-            title={label || iconDef.name}
-          >
-            {label || iconDef.name}
-          </div>
+          {isEditing ? (
+            <input
+              type="text"
+              value={editingText ?? ''}
+              onChange={(e) => onEditingTextChange?.(e.target.value)}
+              onBlur={onSaveTextEdit}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  onSaveTextEdit?.();
+                } else if (e.key === 'Escape') {
+                  onCancelTextEdit?.();
+                }
+              }}
+              autoFocus
+              className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold text-[11.5px] leading-snug tracking-tight p-0 m-0 w-full"
+              style={{
+                color: titleColor,
+                fontSize: `${fontSize || 12}px`,
+              }}
+              onClick={(e) => e.stopPropagation()}
+              onMouseDown={(e) => e.stopPropagation()}
+            />
+          ) : (
+            <div
+              className="font-semibold truncate text-[11.5px] leading-snug tracking-tight"
+              style={{
+                color: titleColor,
+                fontSize: `${fontSize || 12}px`,
+              }}
+              title={label || iconDef.name}
+            >
+              {label || iconDef.name}
+            </div>
+          )}
 
           {subtitle && (
             <div
@@ -175,16 +210,41 @@ export const IconRenderer: React.FC<IconRendererProps> = ({
       {iconGraphic}
 
       {/* Clean Title Below the Icon */}
-      <div
-        className="font-semibold text-center truncate max-w-full mt-1.5 leading-tight px-1 tracking-tight"
-        style={{
-          color: titleColor,
-          fontSize: `${fontSize || 12}px`,
-        }}
-        title={label || iconDef.name}
-      >
-        {label || iconDef.name}
-      </div>
+      {isEditing ? (
+        <input
+          type="text"
+          value={editingText ?? ''}
+          onChange={(e) => onEditingTextChange?.(e.target.value)}
+          onBlur={onSaveTextEdit}
+          onKeyDown={(e) => {
+            if (e.key === 'Enter') {
+              e.preventDefault();
+              onSaveTextEdit?.();
+            } else if (e.key === 'Escape') {
+              onCancelTextEdit?.();
+            }
+          }}
+          autoFocus
+          className="bg-transparent border-b border-dashed border-blue-400 outline-none font-semibold text-center max-w-full mt-1.5 leading-tight px-1 tracking-tight p-0 m-0 w-full"
+          style={{
+            color: titleColor,
+            fontSize: `${fontSize || 12}px`,
+          }}
+          onClick={(e) => e.stopPropagation()}
+          onMouseDown={(e) => e.stopPropagation()}
+        />
+      ) : (
+        <div
+          className="font-semibold text-center truncate max-w-full mt-1.5 leading-tight px-1 tracking-tight"
+          style={{
+            color: titleColor,
+            fontSize: `${fontSize || 12}px`,
+          }}
+          title={label || iconDef.name}
+        >
+          {label || iconDef.name}
+        </div>
+      )}
 
       {subtitle && (
         <div

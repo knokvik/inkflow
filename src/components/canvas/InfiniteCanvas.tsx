@@ -855,6 +855,11 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   const handleElementMouseDown = (e: React.MouseEvent, element: CanvasElement) => {
     e.stopPropagation();
 
+    // If currently editing another element, commit its text changes first
+    if (editingElementId && editingElementId !== element.id) {
+      handleSaveTextEdit();
+    }
+
     if (activeTool === 'hand' || isSpacePressed) {
       setIsPanning(true);
       setPanStart({ x: e.clientX - pan.x, y: e.clientY - pan.y });
@@ -978,11 +983,12 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
         if (el.id === editingElementId) {
           if (el.type === 'connector') return { ...el, connectorLabel: editingText };
           if (el.type === 'frame') return { ...el, frameTitle: editingText };
-          if (el.type === 'icon') return { ...el, iconLabel: editingText };
+          if (el.type === 'icon') return { ...el, iconLabel: editingText, text: editingText };
           return { ...el, text: editingText };
         }
         return el;
-      })
+      }),
+      true
     );
     setEditingElementId(null);
   };
@@ -991,7 +997,6 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
   const connectors = elements.filter((e) => e.type === 'connector');
   const pens = elements.filter((e) => e.type === 'pen');
   const nodes = elements.filter((e) => e.type !== 'connector' && e.type !== 'pen');
-  const editingElement = elements.find((e) => e.id === editingElementId);
 
   // Background class
   const gridClass =
@@ -1030,6 +1035,11 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
               allElements={elements}
               isSelected={selectedIds.includes(conn.id)}
               theme={theme}
+              isEditing={editingElementId === conn.id}
+              editingText={editingText}
+              onEditingTextChange={setEditingText}
+              onSaveTextEdit={handleSaveTextEdit}
+              onCancelTextEdit={() => setEditingElementId(null)}
               onSelect={(e) => {
                 e.stopPropagation();
                 onSelectedIdsChange([conn.id]);
@@ -1219,6 +1229,11 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
             isHovered={hoveredElementId === el.id}
             theme={theme}
             isConnectorToolActive={activeTool === 'connector'}
+            isEditing={editingElementId === el.id}
+            editingText={editingText}
+            onEditingTextChange={setEditingText}
+            onSaveTextEdit={handleSaveTextEdit}
+            onCancelTextEdit={() => setEditingElementId(null)}
             onSelect={(e) => handleElementMouseDown(e, el)}
             onStartResize={(e, handle) => handleStartResize(e, el, handle)}
             onStartAnchorConnect={(e, anchor) => {
@@ -1329,48 +1344,7 @@ export const InfiniteCanvas: React.FC<InfiniteCanvasProps> = ({
           />
         )}
 
-        {/* Inline Text Editing directly positioned inside canvas element */}
-        {editingElement && (
-          <div
-            className="absolute z-50 flex items-center justify-center pointer-events-auto"
-            style={{
-              left: `${editingElement.x}px`,
-              top: `${editingElement.y}px`,
-              width: `${Math.max(editingElement.width, 100)}px`,
-              height: `${Math.max(editingElement.height, 38)}px`,
-            }}
-            onClick={(e) => e.stopPropagation()}
-            onMouseDown={(e) => e.stopPropagation()}
-          >
-            <textarea
-              value={editingText}
-              onChange={(e) => setEditingText(e.target.value)}
-              onBlur={handleSaveTextEdit}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter' && !e.shiftKey) {
-                  e.preventDefault();
-                  handleSaveTextEdit();
-                } else if (e.key === 'Escape') {
-                  setEditingElementId(null);
-                }
-              }}
-              placeholder="Write here..."
-              autoFocus
-              className={`w-full h-full border-2 border-neutral-400 dark:border-neutral-500 rounded-lg p-2 text-center resize-none focus:outline-none flex items-center justify-center shadow-lg ${
-                isDark ? 'bg-[#242424] text-white' : 'bg-white text-neutral-900 shadow-md'
-              }`}
-              style={{
-                fontSize: `${editingElement.style?.fontSize || 15}px`,
-                fontFamily:
-                  editingElement.style?.fontFamily === 'mono'
-                    ? "'JetBrains Mono', monospace"
-                    : editingElement.style?.fontFamily === 'hand'
-                    ? "'Caveat', cursive"
-                    : 'inherit',
-              }}
-            />
-          </div>
-        )}
+
       </div>
     </div>
   );
